@@ -30,14 +30,12 @@ Deno.serve(async (req: Request) => {
       throw new Error('CLAUDE_API_KEY not configured');
     }
 
-    // Fetch BTC price from Binance
     const binanceResponse = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
     if (!binanceResponse.ok) {
       throw new Error(`Binance API error: ${binanceResponse.status}`);
     }
     const binanceData = await binanceResponse.json();
 
-    // Fetch historical data for indicators
     const klineUrl = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=100';
     const klineResponse = await fetch(klineUrl);
     if (!klineResponse.ok) {
@@ -45,53 +43,44 @@ Deno.serve(async (req: Request) => {
     }
     const klines = await klineResponse.json();
 
-    if (!Array.isArray(klines)) {
-      throw new Error('Invalid klines response format');
+    if (!Array.isArray(klines) || klines.length < 50) {
+      throw new Error(`Insufficient historical data`);
     }
 
-    if (klines.length < 50) {
-      throw new Error(`Insufficient historical data: only ${klines.length} candles available`);
-    }
-
-    // Calculate technical indicators
     const closePrices = klines.map((k: any) => parseFloat(k[4]));
     const volumes = klines.map((k: any) => parseFloat(k[5]));
     const indicators = calculateIndicators(closePrices, volumes);
 
-    // Fetch cached API data
+    const { data: reputation } = await supabase
+      .from('crypto_reputation')
+      .select('reputation_score, success_rate, total_trades')
+      .eq('symbol', 'BTCUSDT')
+      .single();
+
+    const reputationScore = reputation?.reputation_score || 50;
+    const successRate = reputation?.success_rate || 50;
+
     const { data: cachedApis } = await supabase
       .from('api_cache')
       .select('api_name, response_data, source, data')
       .in('api_name', ['coinmarketcap', 'coingecko', 'cryptopanic', 'santiment']);
 
-    // Extract useful data from cached APIs
-    let cmcPrice = 'N/A';
-    let cgPrice = 'N/A';
     let newsCount = 0;
+    let newsSentiment = 'neutral';
     let activeAddresses = 'N/A';
     let socialVolume = 'N/A';
 
     if (cachedApis) {
-      const cmcCache = cachedApis.find(a => a.api_name === 'coinmarketcap' || a.source === 'cmc_listings');
-      if (cmcCache) {
-        const cmcData = cmcCache.response_data || cmcCache.data;
-        if (Array.isArray(cmcData) && cmcData[0]) {
-          cmcPrice = `$${cmcData[0].quote?.USD?.price?.toFixed(2) || 'N/A'}`;
-        }
-      }
-
-      const cgCache = cachedApis.find(a => a.api_name === 'coingecko');
-      if (cgCache) {
-        const cgData = cgCache.response_data || cgCache.data;
-        if (Array.isArray(cgData) && cgData[0]) {
-          cgPrice = `$${cgData[0].current_price?.toFixed(2) || 'N/A'}`;
-        }
-      }
-
       const newsCache = cachedApis.find(a => a.api_name === 'cryptopanic' || a.source === 'cryptopanic_news');
       if (newsCache) {
         const newsData = newsCache.response_data || newsCache.data;
         newsCount = Array.isArray(newsData) ? newsData.length : 0;
+        if (Array.isArray(newsData)) {
+          const positive = newsData.filter((n: any) => n.votes?.positive > n.votes?.negative).length;
+          const negative = newsData.filter((n: any) => n.votes?.negative > n.votes?.positive).length;
+          if (positive > negative * 1.5) newsSentiment = 'bullish';
+          else if (negative > positive * 1.5) newsSentiment = 'bearish';
+        }
       }
 
       const santimentCache = cachedApis.find(a => a.api_name === 'santiment' || a.source === 'santiment_onchain_bitcoin');
@@ -104,47 +93,12 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Build prompt for Claude AI
-    const prompt = `Tu es un expert en trading de cryptomonnaies. Analyse les données suivantes et génère un signal de trading pour Bitcoin (BTC).
+    const currentPrice = parseFloat(binanceData.lastPrice);
+    const change24h = parseFloat(binanceData.priceChangePercent);
+    const volume24h = parseFloat(binanceData.volume);
 
-DONNÉES DE MARCHÉ:
-- Prix actuel: $${parseFloat(binanceData.lastPrice).toFixed(2)}
-- Variation 24h: ${parseFloat(binanceData.priceChangePercent).toFixed(2)}%
-- Volume 24h: ${parseFloat(binanceData.volume).toFixed(0)} BTC
-- Plus haut 24h: $${parseFloat(binanceData.highPrice).toFixed(2)}
-- Plus bas 24h: $${parseFloat(binanceData.lowPrice).toFixed(2)}
+    const prompt = `Tu es un analyste crypto professionnel.\nAnalyse le marché du Bitcoin (BTC/USDT) sur les horizons 1h, 4h, 1j.\n\nDonnées de marché:\n{\n  "last": ${currentPrice.toFixed(2)},\n  "change24h": ${change24h.toFixed(2)},\n  "volume24h": ${volume24h.toFixed(0)},\n  "high24h": ${parseFloat(binanceData.highPrice).toFixed(2)},\n  "low24h": ${parseFloat(binanceData.lowPrice).toFixed(2)},\n  "reputation": ${reputationScore.toFixed(2)},\n  "success_rate": ${successRate.toFixed(2)}\n}\n\nIndicateurs techniques:\n{\n  "rsi": ${indicators.rsi.toFixed(2)},\n  "macd": ${indicators.macd.macd.toFixed(2)},\n  "macd_histogram": ${indicators.macd.histogram.toFixed(2)},\n  "ema20": ${indicators.ema20.toFixed(2)},\n  "ema50": ${indicators.ema50.toFixed(2)},\n  "volume_ratio": ${indicators.volume.toFixed(2)},\n  "price_change_1h": ${indicators.priceChange.toFixed(2)}\n}\n\nContexte additionnel:\n{\n  "risk_profile": "modéré",\n  "market_sentiment": "${newsSentiment}",\n  "news_count": ${newsCount},\n  "active_addresses": "${activeAddresses}",\n  "social_volume": "${socialVolume}"\n}\n\nFournis une réponse strictement au format JSON suivant (sans markdown, sans backticks):\n{\n  "symbol": "BTCUSDT",\n  "signal_type": "BUY" | "SELL" | "WAIT",\n  "confidence": 0-100,\n  "entry_price": <prix_entrée>,\n  "take_profit": <prix_tp>,\n  "stop_loss": <prix_sl>,\n  "horizon_minutes": <durée_estimée>,\n  "reason": {\n    "explain": "<explication brève en français>",\n    "indicators": ["liste", "des", "indicateurs", "clés"]\n  }\n}\n\nRègles strictes:\n1. Ne JAMAIS renvoyer take_profit = entry_price\n2. BUY/SELL uniquement si confidence > 65\n3. Adapter TP/SL selon reputation_score (${reputationScore.toFixed(0)})\n4. Si reputation < 50: TP/SL plus serrés (-20%)\n5. Si reputation > 70: TP/SL plus larges (+20%)\n6. Si aucune opportunité claire: renvoyer WAIT\n7. TP doit être > entry_price pour BUY, < entry_price pour SELL\n8. SL doit être < entry_price pour BUY, > entry_price pour SELL`;
 
-INDICATEURS TECHNIQUES:
-- RSI (14): ${indicators.rsi.toFixed(2)}
-- MACD: ${indicators.macd.macd.toFixed(2)}
-- MACD Signal: ${indicators.macd.signal.toFixed(2)}
-- MACD Histogram: ${indicators.macd.histogram.toFixed(2)}
-- EMA 20: $${indicators.ema20.toFixed(2)}
-- EMA 50: $${indicators.ema50.toFixed(2)}
-- Volume relatif: ${(indicators.volume * 100).toFixed(0)}%
-- Variation prix: ${indicators.priceChange.toFixed(2)}%
-
-DONNÉES SUPPLÉMENTAIRES:
-- Prix CoinGecko: ${cgPrice}
-- Actualités récentes: ${newsCount} articles
-- Adresses actives: ${activeAddresses}
-- Volume social: ${socialVolume}
-
-Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans backticks):
-{
-  "signal_type": "BUY" ou "SELL" ou "WAIT",
-  "confidence": nombre entre 0 et 100,
-  "entry_price": prix d'entrée suggéré,
-  "take_profit": prix de take profit,
-  "stop_loss": prix de stop loss,
-  "horizon_minutes": durée estimée du signal en minutes,
-  "reason": {
-    "explain": "explication détaillée en français",
-    "indicators": ["liste", "des", "indicateurs", "clés"]
-  }
-}`;
-
-    // Call Claude AI
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -153,11 +107,9 @@ Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans b
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet',
         max_tokens: 1200,
-        messages: [
-          { role: 'user', content: prompt }
-        ]
+        messages: [{ role: 'user', content: prompt }]
       })
     });
 
@@ -169,7 +121,6 @@ Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans b
     const claudeData = await claudeResponse.json();
     const aiResponseText = claudeData.content[0].text;
 
-    // Parse AI response (handle potential markdown wrapping)
     let signalData;
     try {
       const cleanedText = aiResponseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -179,12 +130,17 @@ Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans b
       throw new Error(`Invalid JSON response from Claude AI: ${parseError.message}`);
     }
 
-    // Validate signal structure
     if (!signalData.signal_type || !['BUY', 'SELL', 'WAIT'].includes(signalData.signal_type)) {
       throw new Error('Invalid signal_type from Claude AI');
     }
 
-    // Store signal in database (only if not WAIT)
+    if (signalData.signal_type === 'BUY' && signalData.take_profit <= signalData.entry_price) {
+      signalData.take_profit = signalData.entry_price * 1.03;
+    }
+    if (signalData.signal_type === 'SELL' && signalData.take_profit >= signalData.entry_price) {
+      signalData.take_profit = signalData.entry_price * 0.97;
+    }
+
     if (signalData.signal_type !== 'WAIT') {
       const { error: insertError } = await supabase
         .from('crypto_signals')
@@ -201,9 +157,7 @@ Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans b
           created_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error('Error inserting signal:', insertError);
-      }
+      if (insertError) console.error('Error inserting signal:', insertError);
     }
 
     return new Response(
@@ -211,38 +165,26 @@ Donne UNIQUEMENT une réponse JSON structurée comme suit (sans markdown, sans b
         success: true,
         signal: signalData,
         market_data: {
-          price: parseFloat(binanceData.lastPrice),
-          change_24h: parseFloat(binanceData.priceChangePercent),
-          volume_24h: parseFloat(binanceData.volume)
+          price: currentPrice,
+          change_24h: change24h,
+          volume_24h: volume24h,
+          reputation_score: reputationScore,
+          success_rate: successRate
         },
         indicators,
         timestamp: new Date().toISOString()
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error in generate-btc-signal:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ success: false, error: error.message, timestamp: new Date().toISOString() }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
-
-// ============================================================================
-// TECHNICAL INDICATORS CALCULATIONS
-// ============================================================================
 
 function calculateIndicators(prices: number[], volumes: number[]): TechnicalIndicators {
   const rsi = calculateRSI(prices, 14);
@@ -252,32 +194,17 @@ function calculateIndicators(prices: number[], volumes: number[]): TechnicalIndi
   const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
   const currentVolume = volumes[volumes.length - 1];
   const priceChange = ((prices[prices.length - 1] - prices[prices.length - 2]) / prices[prices.length - 2]) * 100;
-
-  return {
-    rsi,
-    macd,
-    ema20,
-    ema50,
-    volume: currentVolume / avgVolume,
-    priceChange,
-  };
+  return { rsi, macd, ema20, ema50, volume: currentVolume / avgVolume, priceChange };
 }
 
 function calculateRSI(prices: number[], period: number): number {
   if (prices.length < period + 1) return 50;
-
-  let gains = 0;
-  let losses = 0;
-
+  let gains = 0, losses = 0;
   for (let i = prices.length - period; i < prices.length; i++) {
     const change = prices[i] - prices[i - 1];
-    if (change > 0) gains += change;
-    else losses -= change;
+    if (change > 0) gains += change; else losses -= change;
   }
-
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
-
+  const avgGain = gains / period, avgLoss = losses / period;
   if (avgLoss === 0) return 100;
   const rs = avgGain / avgLoss;
   return 100 - (100 / (1 + rs));
@@ -285,14 +212,9 @@ function calculateRSI(prices: number[], period: number): number {
 
 function calculateEMA(prices: number[], period: number): number {
   if (prices.length < period) return prices[prices.length - 1];
-
   const multiplier = 2 / (period + 1);
   let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-
-  for (let i = period; i < prices.length; i++) {
-    ema = (prices[i] - ema) * multiplier + ema;
-  }
-
+  for (let i = period; i < prices.length; i++) ema = (prices[i] - ema) * multiplier + ema;
   return ema;
 }
 
@@ -302,6 +224,5 @@ function calculateMACD(prices: number[]): { macd: number; signal: number; histog
   const macd = ema12 - ema26;
   const signal = macd * 0.9;
   const histogram = macd - signal;
-
   return { macd, signal, histogram };
 }
