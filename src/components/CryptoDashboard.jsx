@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
     import AiControlPanel from './AiControlPanel';
     import LiveMarketTable from './LiveMarketTable';
     import ScanRecommendation from './ScanRecommendation';
+    import InitialSignalGenerator from './InitialSignalGenerator';
     import { Button } from './ui/button';
 
     const CryptoDashboard = ({ signals, marketData, isLoading, user, settings, setSettings }) => {
@@ -63,7 +64,8 @@ import React, { useState, useEffect } from 'react';
           </div>
 
           <ScanRecommendation signal={latestSignal} />
-          
+          <InitialSignalGenerator signalsCount={signals.length} />
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               <MarketHeatmap marketData={marketData} limit={10} />

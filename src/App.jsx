@@ -12,6 +12,7 @@ import { Zap } from 'lucide-react';
 import MarketPage from '@/pages/MarketPage';
 import SignalsPage from '@/pages/SignalsPage';
 import TradeAnalysisPage from '@/pages/TradeAnalysisPage';
+import AutoSignalGenerator from '@/components/AutoSignalGenerator';
 
 function App() {
   const [signals, setSignals] = useState([]);
@@ -76,12 +77,14 @@ function App() {
   useEffect(() => {
     if (!user) return;
 
+    const notificationsEnabled = settings.notifications_enabled;
+
     const signalsChannel = supabase.channel('crypto_signals_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'crypto_signals' }, (payload) => {
           const newSignal = payload.new;
           setSignals(currentSignals => [newSignal, ...currentSignals].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
-          if (settings.notifications_enabled) {
+          if (notificationsEnabled) {
             toast({
                 description: (
                   <div className="flex items-center gap-3">
@@ -102,10 +105,9 @@ function App() {
           setSignals(currentSignals => currentSignals.map(s => s.id === payload.new.id ? {...s, ...payload.new} : s));
       })
       .subscribe();
-    
+
     const marketDataChannel = supabase.channel('crypto_market_data_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'crypto_market_data' }, (payload) => {
-          // Refetch all market data to ensure order and consistency
           supabase.from('crypto_market_data').select('*').order('volume_24h', { ascending: false })
             .then(({ data }) => setMarketData(data || []));
       })
@@ -123,7 +125,7 @@ function App() {
         supabase.removeChannel(marketDataChannel);
         supabase.removeChannel(settingsChannel);
     };
-  }, [user, toast, settings.notifications_enabled]);
+  }, [user, toast]);
   
   const Layout = () => (
      <>
@@ -141,6 +143,7 @@ function App() {
         <meta name="description" content="Plateforme d'analyse et de génération de signaux de trading pour les crypto-monnaies, pilotée par l'IA." />
       </Helmet>
       <div className="min-h-screen pb-8 bg-background text-foreground">
+        <AutoSignalGenerator />
         <Routes>
             <Route path="/" element={<Layout />}>
                 <Route index element={
