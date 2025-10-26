@@ -19,6 +19,54 @@ interface CryptoData {
   low24h: number;
 }
 
+async function fetchMarketDataWithFallback(symbols: string[]) {
+  const BINANCE_URLS = [
+    'https://api-gateway.binance.com/api/v3/ticker/24hr',
+    'https://data-api.binance.vision/api/v3/ticker/24hr',
+    'https://api.binance.com/api/v3/ticker/24hr'
+  ];
+
+  for (const url of BINANCE_URLS) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          return { success: true, data: data.filter((t: any) => symbols.includes(t.symbol)) };
+        }
+      }
+    } catch (error) {
+      console.log(`Binance URL failed: ${url}`);
+    }
+  }
+
+  return { success: false, data: [] };
+}
+
+async function fetchKlinesWithFallback(symbol: string) {
+  const BINANCE_URLS = [
+    `https://api-gateway.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=100`,
+    `https://data-api.binance.vision/api/v3/klines?symbol=${symbol}&interval=1h&limit=100`,
+    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=100`
+  ];
+
+  for (const url of BINANCE_URLS) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length >= 50) {
+          return { success: true, data };
+        }
+      }
+    } catch (error) {
+      console.log(`Klines URL failed: ${url}`);
+    }
+  }
+
+  return { success: false, data: [] };
+}
+
 interface Signal {
   symbol: string;
   signal_type: 'BUY' | 'SELL' | 'WAIT';
@@ -51,16 +99,18 @@ Deno.serve(async (req: Request) => {
 
     if (watchlistError) throw watchlistError;
 
-    // Fetch des données de marché depuis Binance
+    // Fetch des données de marché avec fallback
     const symbols = watchlist?.map(w => w.symbol) || [];
-    const binanceUrl = 'https://api.binance.com/api/v3/ticker/24hr';
-    const response = await fetch(binanceUrl);
-    const allTickers = await response.json();
+    const marketResult = await fetchMarketDataWithFallback(symbols);
 
-    // Filtrer uniquement les symboles de la watchlist
-    const relevantTickers = allTickers.filter((ticker: any) => 
-      symbols.includes(ticker.symbol)
-    );
+    if (!marketResult.success || marketResult.data.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Market data unavailable from all sources' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const relevantTickers = marketResult.data;
 
     // Transformer et stocker les données de marché
     const marketData: CryptoData[] = relevantTickers.map((ticker: any) => ({
@@ -89,12 +139,11 @@ Deno.serve(async (req: Request) => {
     const signals: Signal[] = [];
 
     for (const crypto of marketData) {
-      // Fetch historical data pour calcul d'indicateurs
-      const klineUrl = `https://api.binance.com/api/v3/klines?symbol=${crypto.symbol}&interval=1h&limit=100`;
-      const klineResponse = await fetch(klineUrl);
-      const klines = await klineResponse.json();
+      // Fetch historical data avec fallback
+      const klinesResult = await fetchKlinesWithFallback(crypto.symbol);
+      if (!klinesResult.success || klinesResult.data.length < 50) continue;
 
-      if (!Array.isArray(klines) || klines.length < 50) continue;
+      const klines = klinesResult.data;
 
       // Calcul des indicateurs techniques
       const closePrices = klines.map((k: any) => parseFloat(k[4]));

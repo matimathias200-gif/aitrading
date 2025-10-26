@@ -27,24 +27,46 @@ Deno.serve(async (req: Request) => {
 
     const results: ApiValidationResult[] = [];
 
-    // 🟢 1️⃣ Test Binance REST API
+    // 🟢 1️⃣ Test Binance REST API with fallback
     try {
-      const binanceResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-      const binanceData = await binanceResponse.json();
-      
-      if (binanceData.symbol && binanceData.price) {
+      const BINANCE_URLS = [
+        'https://api-gateway.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
+        'https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT',
+        'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'
+      ];
+
+      let binanceData = null;
+      let successUrl = null;
+
+      for (const url of BINANCE_URLS) {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.symbol && data.price) {
+              binanceData = data;
+              successUrl = url;
+              break;
+            }
+          }
+        } catch (err) {
+          console.log(`Binance URL failed: ${url}`);
+        }
+      }
+
+      if (binanceData) {
         results.push({
           api: 'Binance',
           status: 'success',
           data: {
             symbol: binanceData.symbol,
             price: parseFloat(binanceData.price),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: successUrl
           },
           timestamp: new Date().toISOString()
         });
-        
-        // Store in cache
+
         await supabase.from('api_cache').upsert({
           api_name: 'binance',
           endpoint: 'ticker/price',
@@ -52,7 +74,7 @@ Deno.serve(async (req: Request) => {
           cached_at: new Date().toISOString()
         }, { onConflict: 'api_name,endpoint' });
       } else {
-        throw new Error('Invalid Binance response structure');
+        throw new Error('All Binance endpoints unavailable (region restricted)');
       }
     } catch (error) {
       results.push({
