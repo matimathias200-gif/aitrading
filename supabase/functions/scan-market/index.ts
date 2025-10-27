@@ -89,7 +89,6 @@ Deno.serve(async (req: Request) => {
     const claudeApiKey = Deno.env.get('CLAUDE_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get watchlist
     const { data: watchlist, error: watchlistError } = await supabase
       .from('crypto_watchlist')
       .select('symbol')
@@ -109,7 +108,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch market data with fallback
     const marketResult = await fetchMarketDataWithFallback(supabase, symbols);
     if (!marketResult.success || marketResult.data.length === 0) {
       return new Response(
@@ -127,10 +125,8 @@ Deno.serve(async (req: Request) => {
 
     const generatedSignals = [];
 
-    // Process each crypto
     for (const ticker of relevantTickers) {
       try {
-        // Fetch historical data with fallback
         const klinesResult = await fetchKlinesWithFallback(ticker.symbol);
         if (!klinesResult.success || klinesResult.data.length < 30) continue;
 
@@ -145,33 +141,15 @@ Deno.serve(async (req: Request) => {
         const price = parseFloat(ticker.lastPrice);
         const change24h = parseFloat(ticker.priceChangePercent);
 
-        // Quick filter: only analyze if there's a strong signal
         const shouldAnalyze = (
-          (rsi < 35 || rsi > 65) || // Oversold or overbought
-          (Math.abs(macd.histogram) > 10) || // Strong MACD signal
-          (Math.abs(change24h) > 3) // Significant price movement
+          (rsi < 35 || rsi > 65) ||
+          (Math.abs(macd.histogram) > 10) ||
+          (Math.abs(change24h) > 3)
         );
 
         if (!shouldAnalyze) continue;
 
-        // Call Claude AI for analysis
-        const prompt = `Analyse rapide de ${ticker.symbol}:
-Prix: $${price.toFixed(2)} (${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%)
-RSI: ${rsi.toFixed(1)}, MACD: ${macd.histogram.toFixed(2)}, EMA20: $${ema20.toFixed(2)}
-
-Réponds en JSON (sans markdown):
-{
-  "signal_type": "BUY"/"SELL"/"WAIT",
-  "confidence": 0-100,
-  "entry_price": ${price},
-  "take_profit": prix_tp,
-  "stop_loss": prix_sl,
-  "horizon_minutes": 60,
-  "reason": {
-    "explain": "bref",
-    "indicators": ["liste"]
-  }
-}`;
+        const prompt = `Analyse rapide de ${ticker.symbol}:\nPrix: $${price.toFixed(2)} (${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%)\nRSI: ${rsi.toFixed(1)}, MACD: ${macd.histogram.toFixed(2)}, EMA20: $${ema20.toFixed(2)}\n\nRéponds en JSON (sans markdown):\n{\n  "signal_type": "BUY"/"SELL"/"WAIT",\n  "confidence": 0-100,\n  "entry_price": ${price},\n  "take_profit": prix_tp,\n  "stop_loss": prix_sl,\n  "horizon_minutes": 60,\n  "reason": {\n    "explain": "bref",\n    "indicators": ["liste"]\n  }\n}`;
 
         const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
@@ -181,7 +159,7 @@ Réponds en JSON (sans markdown):
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'claude-3-5-sonnet',
+            model: 'claude-3-5-sonnet-20241022',
             max_tokens: 512,
             messages: [{ role: 'user', content: prompt }]
           })
@@ -204,7 +182,6 @@ Réponds en JSON (sans markdown):
           continue;
         }
 
-        // Only store actionable signals (BUY/SELL)
         if (signalData.signal_type !== 'WAIT') {
           const { error: insertError } = await supabase
             .from('crypto_signals')
@@ -264,10 +241,6 @@ Réponds en JSON (sans markdown):
     );
   }
 });
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
 
 function calculateRSI(prices: number[], period: number): number {
   if (prices.length < period + 1) return 50;
