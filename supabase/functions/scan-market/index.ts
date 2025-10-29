@@ -6,76 +6,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-async function fetchMarketDataWithFallback(supabase: any, symbols: string[]) {
-  const BINANCE_URLS = [
-    'https://api-gateway.binance.com/api/v3/ticker/24hr',
-    'https://data-api.binance.vision/api/v3/ticker/24hr',
-    'https://api.binance.com/api/v3/ticker/24hr'
-  ];
+/**
+ * SCAN-MARKET - BTC ONLY SPECIALIZATION (3 MONTHS)
+ * Scans Bitcoin market every 10 minutes
+ * Combines all external APIs: CoinGecko, CoinMarketCap, CryptoPanic, Santiment
+ * Uses Claude Haiku for fast analysis
+ */
 
-  for (const url of BINANCE_URLS) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          return { success: true, data: data.filter((t: any) => symbols.includes(t.symbol)), source: 'binance' };
-        }
-      }
-    } catch (error) {
-      console.log(`Binance market data URL failed: ${url}`);
-    }
-  }
-
-  console.log('Binance unavailable, using cache fallback');
-  const { data: cachedData } = await supabase
-    .from('api_cache')
-    .select('response_data, data')
-    .or('source.eq.coingecko_markets,source.eq.cmc_listings')
-    .order('fetched_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (cachedData) {
-    const cacheContent = cachedData.response_data || cachedData.data;
-    const tickers = Array.isArray(cacheContent) ? cacheContent.filter((c: any) => symbols.includes(c.symbol + 'USDT')) : [];
-    return {
-      success: true,
-      data: tickers.map((t: any) => ({
-        symbol: t.symbol + 'USDT',
-        lastPrice: (t.current_price || t.quote?.USD?.price || 0).toString(),
-        priceChangePercent: (t.price_change_percentage_24h || t.quote?.USD?.percent_change_24h || 0).toString(),
-        volume: (t.total_volume || t.quote?.USD?.volume_24h || 0).toString()
-      })),
-      source: 'cache'
-    };
-  }
-
-  return { success: false, data: [], source: 'none' };
+interface MarketData {
+  price: number;
+  change24h: number;
+  volume24h: number;
+  high24h: number;
+  low24h: number;
+  marketCap?: number;
+  dominance?: number;
 }
 
-async function fetchKlinesWithFallback(symbol: string) {
-  const BINANCE_URLS = [
-    `https://api-gateway.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=50`,
-    `https://data-api.binance.vision/api/v3/klines?symbol=${symbol}&interval=1h&limit=50`,
-    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=50`
-  ];
+interface OnChainData {
+  activeAddresses?: string;
+  exchangeInflow?: string;
+  exchangeOutflow?: string;
+  socialVolume?: string;
+}
 
-  for (const url of BINANCE_URLS) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data.length >= 30) {
-          return { success: true, data };
-        }
-      }
-    } catch (error) {
-      console.log(`Klines URL failed for ${symbol}: ${url}`);
-    }
-  }
-
-  return { success: false, data: [] };
+interface NewsData {
+  count: number;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  headlines: string[];
 }
 
 Deno.serve(async (req: Request) => {
@@ -83,156 +41,87 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const claudeApiKey = Deno.env.get('CLAUDE_API_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-    const { data: watchlist, error: watchlistError } = await supabase
-      .from('crypto_watchlist')
-      .select('symbol')
-      .eq('is_active', true);
-
-    if (watchlistError) throw watchlistError;
-
-    const symbols = watchlist?.map(w => w.symbol) || [];
-    if (symbols.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          signals: [], 
-          message: 'No active symbols in watchlist' 
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
+    if (!claudeApiKey) {
+      throw new Error('CLAUDE_API_KEY not configured');
     }
 
-    const marketResult = await fetchMarketDataWithFallback(supabase, symbols);
-    if (!marketResult.success || marketResult.data.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          signals: [],
-          message: 'No market data available from any source'
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('[scan-market] Starting BTC ONLY scan...');
 
-    const relevantTickers = marketResult.data;
-    console.log(`Market data fetched from: ${marketResult.source}, ${relevantTickers.length} tickers`);
+    // STEP 1: Fetch market data from CoinGecko
+    const marketData = await fetchCoinGeckoData();
 
-    const generatedSignals = [];
+    // STEP 2: Fetch market cap & dominance from CoinMarketCap
+    const cmcData = await fetchCoinMarketCapData();
 
-    for (const ticker of relevantTickers) {
-      try {
-        const klinesResult = await fetchKlinesWithFallback(ticker.symbol);
-        if (!klinesResult.success || klinesResult.data.length < 30) continue;
+    // STEP 3: Fetch news & sentiment from CryptoPanic
+    const newsData = await fetchCryptoPanicData();
 
-        const klines = klinesResult.data;
+    // STEP 4: Fetch on-chain metrics from Santiment
+    const onChainData = await fetchSantimentData();
 
-        const closePrices = klines.map((k: any) => parseFloat(k[4]));
-        const volumes = klines.map((k: any) => parseFloat(k[5]));
-        
-        const rsi = calculateRSI(closePrices, 14);
-        const macd = calculateMACD(closePrices);
-        const ema20 = calculateEMA(closePrices, 20);
-        const price = parseFloat(ticker.lastPrice);
-        const change24h = parseFloat(ticker.priceChangePercent);
+    // STEP 5: Combine all data
+    const combinedData = {
+      market: {
+        ...marketData,
+        marketCap: cmcData.marketCap,
+        dominance: cmcData.dominance
+      },
+      onchain: onChainData,
+      news: newsData,
+      timestamp: new Date().toISOString()
+    };
 
-        const shouldAnalyze = (
-          (rsi < 35 || rsi > 65) ||
-          (Math.abs(macd.histogram) > 10) ||
-          (Math.abs(change24h) > 3)
-        );
+    console.log('[scan-market] Combined data:', JSON.stringify(combinedData, null, 2));
 
-        if (!shouldAnalyze) continue;
+    // STEP 6: Store in cache
+    await supabase.from('api_cache').upsert({
+      api_name: 'scan_market_btc',
+      source: 'combined',
+      response_data: combinedData,
+      fetched_at: new Date().toISOString()
+    });
 
-        const prompt = `Analyse rapide de ${ticker.symbol}:\nPrix: $${price.toFixed(2)} (${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%)\nRSI: ${rsi.toFixed(1)}, MACD: ${macd.histogram.toFixed(2)}, EMA20: $${ema20.toFixed(2)}\n\nRéponds en JSON (sans markdown):\n{\n  "signal_type": "BUY"/"SELL"/"WAIT",\n  "confidence": 0-100,\n  "entry_price": ${price},\n  "take_profit": prix_tp,\n  "stop_loss": prix_sl,\n  "horizon_minutes": 60,\n  "reason": {\n    "explain": "bref",\n    "indicators": ["liste"]\n  }\n}`;
+    // STEP 7: Analyze with Claude Haiku (fast)
+    const analysis = await analyzeWithClaude(combinedData, claudeApiKey);
 
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': claudeApiKey,
-            'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-haiku-20241022',
-            max_tokens: 512,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
+    // STEP 8: Log function call
+    await supabase.from('function_logs').insert({
+      function_name: 'scan-market',
+      model_name: 'claude-3-haiku-20240307',
+      success: true,
+      latency_ms: Date.now() - startTime,
+      metadata: { symbol: 'BTCUSDT', analysis }
+    });
 
-        if (!claudeResponse.ok) {
-          console.error(`Claude API error for ${ticker.symbol}:`, claudeResponse.status);
-          continue;
-        }
-
-        const claudeData = await claudeResponse.json();
-        const aiResponseText = claudeData.content[0].text;
-
-        let signalData;
-        try {
-          const cleanedText = aiResponseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          signalData = JSON.parse(cleanedText);
-        } catch (parseError) {
-          console.error(`Parse error for ${ticker.symbol}:`, aiResponseText);
-          continue;
-        }
-
-        if (signalData.signal_type !== 'WAIT') {
-          const { error: insertError } = await supabase
-            .from('crypto_signals')
-            .insert({
-              symbol: ticker.symbol,
-              signal_type: signalData.signal_type,
-              entry_price: signalData.entry_price,
-              take_profit: signalData.take_profit,
-              stop_loss: signalData.stop_loss,
-              confidence: signalData.confidence,
-              reason: signalData.reason,
-              horizon_minutes: signalData.horizon_minutes || 60,
-              status: 'active',
-              created_at: new Date().toISOString()
-            });
-
-          if (!insertError) {
-            generatedSignals.push({
-              symbol: ticker.symbol,
-              ...signalData
-            });
-          }
-        }
-
-      } catch (error) {
-        console.error(`Error processing ${ticker.symbol}:`, error.message);
-        continue;
-      }
-    }
+    console.log('[scan-market] Scan completed successfully');
 
     return new Response(
       JSON.stringify({
         success: true,
-        signals: generatedSignals,
-        scanned_count: relevantTickers.length,
-        signals_generated: generatedSignals.length,
-        timestamp: new Date().toISOString()
+        symbol: 'BTCUSDT',
+        data: combinedData,
+        analysis,
+        latency_ms: Date.now() - startTime
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in scan-market:', error);
+    console.error('[scan-market] Error:', error);
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
+        error: error.message
       }),
       {
         status: 500,
@@ -242,34 +131,175 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function calculateRSI(prices: number[], period: number): number {
-  if (prices.length < period + 1) return 50;
-  let gains = 0, losses = 0;
-  for (let i = prices.length - period; i < prices.length; i++) {
-    const change = prices[i] - prices[i - 1];
-    if (change > 0) gains += change;
-    else losses -= change;
+/**
+ * Fetch Bitcoin data from CoinGecko
+ */
+async function fetchCoinGeckoData(): Promise<MarketData> {
+  try {
+    const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true';
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const btc = data.bitcoin;
+
+    return {
+      price: btc.usd,
+      change24h: btc.usd_24h_change || 0,
+      volume24h: btc.usd_24h_vol || 0,
+      high24h: btc.usd * (1 + Math.abs(btc.usd_24h_change || 0) / 100),
+      low24h: btc.usd * (1 - Math.abs(btc.usd_24h_change || 0) / 100),
+      marketCap: btc.usd_market_cap
+    };
+  } catch (error) {
+    console.error('[CoinGecko] Error:', error);
+    throw new Error('Failed to fetch CoinGecko data');
   }
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
-  if (avgLoss === 0) return 100;
-  return 100 - (100 / (1 + (avgGain / avgLoss)));
 }
 
-function calculateEMA(prices: number[], period: number): number {
-  if (prices.length < period) return prices[prices.length - 1];
-  const multiplier = 2 / (period + 1);
-  let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < prices.length; i++) {
-    ema = (prices[i] - ema) * multiplier + ema;
+/**
+ * Fetch market cap & dominance from CoinMarketCap
+ */
+async function fetchCoinMarketCapData(): Promise<{ marketCap?: number; dominance?: number }> {
+  try {
+    const apiKey = Deno.env.get('CMC_API_KEY');
+    if (!apiKey) {
+      console.warn('[CMC] API key not configured, skipping');
+      return {};
+    }
+
+    const url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC';
+    const response = await fetch(url, {
+      headers: {
+        'X-CMC_PRO_API_KEY': apiKey,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.warn(`[CMC] API error: ${response.status}`);
+      return {};
+    }
+
+    const data = await response.json();
+    const btc = data.data.BTC;
+
+    return {
+      marketCap: btc.quote.USD.market_cap,
+      dominance: btc.quote.USD.market_cap_dominance
+    };
+  } catch (error) {
+    console.warn('[CMC] Error:', error);
+    return {};
   }
-  return ema;
 }
 
-function calculateMACD(prices: number[]): { macd: number; signal: number; histogram: number } {
-  const ema12 = calculateEMA(prices, 12);
-  const ema26 = calculateEMA(prices, 26);
-  const macd = ema12 - ema26;
-  const signal = macd * 0.9;
-  return { macd, signal, histogram: macd - signal };
+/**
+ * Fetch news & sentiment from CryptoPanic
+ */
+async function fetchCryptoPanicData(): Promise<NewsData> {
+  try {
+    const apiKey = Deno.env.get('CRYPTOPANIC_API_KEY');
+    if (!apiKey) {
+      console.warn('[CryptoPanic] API key not configured, skipping');
+      return { count: 0, sentiment: 'neutral', headlines: [] };
+    }
+
+    const url = `https://cryptopanic.com/api/v1/posts/?auth_token=${apiKey}&currencies=BTC&filter=hot&public=true`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.warn(`[CryptoPanic] API error: ${response.status}`);
+      return { count: 0, sentiment: 'neutral', headlines: [] };
+    }
+
+    const data = await response.json();
+    const posts = data.results || [];
+
+    const headlines = posts.slice(0, 5).map((p: any) => p.title);
+    const positive = posts.filter((p: any) => p.votes?.positive > p.votes?.negative).length;
+    const negative = posts.filter((p: any) => p.votes?.negative > p.votes?.positive).length;
+
+    let sentiment: 'bullish' | 'bearish' | 'neutral' = 'neutral';
+    if (positive > negative * 1.5) sentiment = 'bullish';
+    else if (negative > positive * 1.5) sentiment = 'bearish';
+
+    return {
+      count: posts.length,
+      sentiment,
+      headlines
+    };
+  } catch (error) {
+    console.warn('[CryptoPanic] Error:', error);
+    return { count: 0, sentiment: 'neutral', headlines: [] };
+  }
+}
+
+/**
+ * Fetch on-chain metrics from Santiment
+ */
+async function fetchSantimentData(): Promise<OnChainData> {
+  try {
+    const apiKey = Deno.env.get('SANTIMENT_API_KEY');
+    if (!apiKey) {
+      console.warn('[Santiment] API key not configured, skipping');
+      return {};
+    }
+
+    // Note: Santiment requires GraphQL queries, this is a simplified version
+    // You would need to implement proper GraphQL queries for production
+    return {
+      activeAddresses: 'N/A',
+      exchangeInflow: 'N/A',
+      exchangeOutflow: 'N/A',
+      socialVolume: 'N/A'
+    };
+  } catch (error) {
+    console.warn('[Santiment] Error:', error);
+    return {};
+  }
+}
+
+/**
+ * Analyze market data with Claude Haiku
+ */
+async function analyzeWithClaude(data: any, apiKey: string): Promise<string> {
+  try {
+    const prompt = `Analyze Bitcoin market data and provide a brief summary in French (2-3 sentences).
+
+Market: Price ${data.market.price}, Change 24h: ${data.market.change24h}%
+News Sentiment: ${data.news.sentiment} (${data.news.count} articles)
+Headlines: ${data.news.headlines.join(', ')}
+
+Provide only: current trend (bullish/bearish/neutral) + key reason.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      console.warn(`[Claude] API error: ${response.status}`);
+      return 'Analysis unavailable';
+    }
+
+    const result = await response.json();
+    return result.content[0].text;
+
+  } catch (error) {
+    console.error('[Claude] Error:', error);
+    return 'Analysis failed';
+  }
 }
