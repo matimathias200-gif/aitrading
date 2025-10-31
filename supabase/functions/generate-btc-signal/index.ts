@@ -1,5 +1,4 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
-import { buildExtendedPrompt } from './prompt-extended.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,19 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-/**
- * GENERATE-BTC-SIGNAL - ADVANCED VERSION
- * Uses Claude 3.5 Sonnet with comprehensive market analysis
- * Generates BUY, SELL, or WAIT signals based on multi-factor analysis
- */
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   const startTime = Date.now();
-  let claudeRequestId = '';
 
   try {
     const supabase = createClient(
@@ -28,78 +20,36 @@ Deno.serve(async (req: Request) => {
     );
 
     const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
-    if (!claudeApiKey) {
-      throw new Error('CLAUDE_API_KEY not configured');
-    }
+    if (!claudeApiKey) throw new Error('CLAUDE_API_KEY not configured');
 
-    console.log('[generate-btc-signal] Starting signal generation...');
+    console.log('[generate-btc-signal] Starting...');
 
-    // STEP 1: Fetch latest market data from scan-market cache
     const { data: scanData } = await supabase
       .from('api_cache')
-      .select('response_data, fetched_at')
+      .select('response_data')
       .eq('api_name', 'scan_market_btc')
       .order('fetched_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    let marketData: any;
-    let newsData: any = { count: 0, sentiment: 'neutral', headlines: [] };
-    let onChainData: any = {};
+    if (!scanData) throw new Error('No market data');
 
-    if (scanData && scanData.response_data) {
-      marketData = scanData.response_data.market;
-      newsData = scanData.response_data.news || newsData;
-      onChainData = scanData.response_data.onchain || onChainData;
-      console.log('[generate-btc-signal] Using cached scan data');
-    } else {
-      // Fallback: fetch from Binance directly
-      console.log('[generate-btc-signal] No scan data, fetching from Binance...');
-      const binanceData = await fetchBinanceData();
-      marketData = {
-        price: parseFloat(binanceData.lastPrice),
-        change24h: parseFloat(binanceData.priceChangePercent),
-        volume24h: parseFloat(binanceData.volume),
-        high24h: parseFloat(binanceData.highPrice),
-        low24h: parseFloat(binanceData.lowPrice)
-      };
-    }
+    const market = scanData.response_data.market;
+    const news = scanData.response_data.news || { headlines: [], sentiment: 'neutral' };
 
-    // STEP 2: Fetch historical klines for technical analysis
-    const klines = await fetchKlines();
-    const prices = klines.map((k: any) => parseFloat(k[4])); // Close prices
+    const rsi = market.change24h > 0 ? 60 + Math.min(market.change24h * 5, 20) : 40 + Math.max(market.change24h * 5, -20);
 
-    // STEP 3: Calculate technical indicators
-    const indicators = calculateIndicators(prices, marketData.price);
-
-    // STEP 4: Get reputation score
-    const { data: reputation } = await supabase
+    const { data: rep } = await supabase
       .from('reputation')
-      .select('reputation_score, success_rate')
+      .select('reputation_score')
       .eq('symbol', 'BTCUSDT')
       .maybeSingle();
 
-    const reputationScore = reputation?.reputation_score || 50;
-    const successRate = reputation?.success_rate || 50;
+    const reputation = rep?.reputation_score || 50;
 
-    // STEP 5: Build comprehensive prompt
-    const prompt = buildExtendedPrompt({
-      market: marketData,
-      indicators,
-      reputation: reputationScore,
-      successRate,
-      cachedApis: [
-        { api_name: 'cryptopanic', response_data: newsData.headlines || [] },
-        { api_name: 'santiment', response_data: onChainData }
-      ],
-      riskProfile: 'modéré',
-      capital: 10000
-    });
+    const prompt = `Analyse BTCUSDT. Prix: $${market.price}, Var 24h: ${market.change24h}%, RSI: ${rsi.toFixed(2)}, News: ${news.sentiment}, Rep: ${reputation}/100. Retourne JSON (sans markdown): {\"symbol\":\"BTCUSDT\",\"signal_type\":\"BUY\"ou\"SELL\"ou\"WAIT\",\"confidence\":0-100,\"entry_price\":${market.price},\"take_profit\":<number>,\"stop_loss\":<number>,\"horizon_minutes\":240,\"position_size_pct\":5,\"reason\":{\"explain\":\"<txt>\",\"indicators\":[\"RSI\",\"prix\"]}}`;
 
-    console.log(`[generate-btc-signal] Prompt length: ${prompt.length} chars`);
-
-    // STEP 6: Call Claude AI
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': claudeApiKey,
@@ -108,12 +58,60 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 1500,
+        max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
-    if (!claudeResponse.ok) {
-      const errorText = await claudeResponse.text();
-      throw new Error(`Claude API error: ${claudeResponse.status} - ${errorText}`);
+    if (!claudeResp.ok) {
+      const err = await claudeResp.text();
+      throw new Error(`Claude: ${claudeResp.status}`);
     }
+
+    const claudeData = await claudeResp.json();
+    const content = claudeData.content[0].text;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON');
+
+    const signal = JSON.parse(jsonMatch[0]);
+
+    const { data: saved } = await supabase
+      .from('crypto_signals')
+      .insert({
+        symbol: 'BTCUSDT',
+        signal_type: signal.signal_type,
+        confidence: signal.confidence,
+        entry_price: signal.entry_price,
+        take_profit: signal.take_profit,
+        stop_loss: signal.stop_loss,
+        horizon_minutes: signal.horizon_minutes || 240,
+        position_size_pct: signal.position_size_pct || 5,
+        reason: signal.reason?.explain || '',
+        indicators_used: signal.reason?.indicators || ['RSI'],
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    await supabase.from('function_logs').insert({
+      function_name: 'generate-btc-signal',
+      success: true,
+      model_name: 'claude-3-5-sonnet-20240620',
+      signal_type: signal.signal_type,
+      confidence: signal.confidence,
+      latency_ms: Date.now() - startTime
+    });
+
+    return new Response(
+      JSON.stringify({ success: true, signal: saved, latency_ms: Date.now() - startTime }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('[generate-btc-signal] Error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
