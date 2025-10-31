@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -75,28 +75,42 @@ Deno.serve(async (req: Request) => {
 
     const signal = JSON.parse(jsonMatch[0]);
 
-    const { data: saved } = await supabase
-      .from('crypto_signals')
-      .insert({
-        symbol: 'BTCUSDT',
-        signal_type: signal.signal_type,
-        confidence: signal.confidence,
-        entry_price: signal.entry_price,
-        take_profit: signal.take_profit,
-        stop_loss: signal.stop_loss,
-        horizon_minutes: signal.horizon_minutes || 240,
-        position_size_pct: signal.position_size_pct || 5,
-        reason: signal.reason?.explain || '',
-        indicators_used: signal.reason?.indicators || ['RSI'],
-        status: 'active'
-      })
-      .select()
-      .single();
+    let saved = null;
+
+    if (signal.signal_type === 'BUY' || signal.signal_type === 'SELL') {
+      const { data: savedData, error: saveError } = await supabase
+        .from('crypto_signals')
+        .insert({
+          symbol: 'BTCUSDT',
+          signal_type: signal.signal_type,
+          confidence: signal.confidence,
+          entry_price: signal.entry_price,
+          take_profit: signal.take_profit,
+          stop_loss: signal.stop_loss,
+          horizon_minutes: signal.horizon_minutes || 240,
+          reason: {
+            explain: signal.reason?.explain || '',
+            indicators: signal.reason?.indicators || ['RSI']
+          },
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('[generate-btc-signal] Save error:', saveError);
+        throw saveError;
+      }
+
+      saved = savedData;
+    } else {
+      console.log('[generate-btc-signal] WAIT signal, not saving to DB');
+    }
 
     await supabase.from('function_logs').insert({
       function_name: 'generate-btc-signal',
       success: true,
-      model_name: 'claude-3-5-sonnet-20240620',
+      model_name: 'claude-3-haiku-20240307',
       signal_type: signal.signal_type,
       confidence: signal.confidence,
       latency_ms: Date.now() - startTime
