@@ -107,7 +107,7 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1500,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
     // STEP 10: Log function call
     await supabase.from('function_logs').insert({
       function_name: 'generate-btc-signal',
-      model_name: 'claude-3-5-sonnet-20240620',
+      model_name: 'claude-3-5-sonnet-20241022',
       request_id: claudeRequestId,
       prompt_length: prompt.length,
       response_length: responseText.length,
@@ -209,7 +209,7 @@ Deno.serve(async (req: Request) => {
 
       await supabase.from('function_logs').insert({
         function_name: 'generate-btc-signal',
-        model_name: 'claude-3-5-sonnet-20240620',
+        model_name: 'claude-3-5-sonnet-20241022',
         request_id: claudeRequestId,
         success: false,
         error_message: error.message,
