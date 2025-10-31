@@ -12,6 +12,12 @@ import { Zap } from 'lucide-react';
 import MarketPage from '@/pages/MarketPage';
 import SignalsPage from '@/pages/SignalsPage';
 import TradeAnalysisPage from '@/pages/TradeAnalysisPage';
+import LandingPage from '@/pages/LandingPage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
+import DashboardPage from '@/pages/DashboardPage';
+import PricingPage from '@/pages/PricingPage';
+import LegalPage from '@/pages/LegalPage';
 import AutoSignalGenerator from '@/components/AutoSignalGenerator';
 
 function App() {
@@ -145,6 +151,17 @@ function App() {
       <div className="min-h-screen pb-8 bg-background text-foreground">
         <AutoSignalGenerator />
         <Routes>
+            {/* Public Routes */}
+            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/legal" element={<LegalPage />} />
+
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+
+            {/* Old Routes (keep for compatibility) */}
             <Route path="/" element={<Layout />}>
                 <Route index element={
                     <CryptoDashboard
