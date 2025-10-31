@@ -5,6 +5,7 @@ import React from 'react';
     import SignalCard from '@/components/SignalCard';
     import PerformanceChart from '@/components/PerformanceChart';
     import LiveFeed from '@/components/LiveFeed';
+    import LiveSignalStream from '@/components/LiveSignalStream';
 
     const Dashboard = ({ signals, capital, isRunning, liveData, isLoading, user }) => {
       const latestSignals = signals.slice(0, 4);
@@ -65,8 +66,13 @@ import React from 'react';
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <PerformanceChart signals={signals} />
+
+              {/* Live Signal Stream */}
+              <div className="glass-effect rounded-xl p-6">
+                <LiveSignalStream />
+              </div>
             </div>
 
             <div className="space-y-6">

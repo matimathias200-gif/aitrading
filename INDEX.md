@@ -17,6 +17,10 @@
 - **[SYSTEM_COMPLETE_GUIDE.md](SYSTEM_COMPLETE_GUIDE.md)** - Guide utilisateur complet
 
 ### Documentation Technique
+- **[README_OPTIMISATION.md](README_OPTIMISATION.md)** - ⭐ **V3.0 - Backtest + Risk + Streaming** ⭐
+- **[V3_FEATURES_SUMMARY.md](V3_FEATURES_SUMMARY.md)** - Synthèse fonctionnalités V3.0
+- **[QUICK_START_V3.md](QUICK_START_V3.md)** - Démarrage rapide V3.0
+- **[SYSTEM_V2_UPGRADE_GUIDE.md](SYSTEM_V2_UPGRADE_GUIDE.md)** - Guide upgrade V2
 - **[BTC_ONLY_DEPLOYMENT_GUIDE.md](BTC_ONLY_DEPLOYMENT_GUIDE.md)** - Stratégie spécialisation BTC (3 mois)
 - **[DEPLOYMENT_COMPLETE.md](DEPLOYMENT_COMPLETE.md)** - Rapport déploiement initial
 - **[SECURITY_FIXES_COMPLETE.md](SECURITY_FIXES_COMPLETE.md)** - Détail des 54 correctifs sécurité
@@ -47,7 +51,14 @@
 
 ## ⚡ EDGE FUNCTIONS
 
-### Fonctions Déployées
+### Fonctions V3.0 (NEW)
+| Fonction | Fichier | Modèle | Fréquence |
+|----------|---------|--------|-----------|
+| **backtest-signals** ⭐ | [supabase/functions/backtest-signals/index.ts](supabase/functions/backtest-signals/index.ts) | Logic Only | 2 jours |
+| **update-risk-parameters** ⭐ | [supabase/functions/update-risk-parameters/index.ts](supabase/functions/update-risk-parameters/index.ts) | Logic Only | 6 heures |
+| **system-audit** ⭐ | [supabase/functions/system-audit/index.ts](supabase/functions/system-audit/index.ts) | Logic Only | 6 heures |
+
+### Fonctions Déployées (V1/V2)
 | Fonction | Fichier | Modèle Claude | Fréquence |
 |----------|---------|---------------|-----------|
 | **scan-market** | [supabase/functions/scan-market/index.ts](supabase/functions/scan-market/index.ts) | Haiku | 10 min |
