@@ -195,15 +195,16 @@ Deno.serve(async (req: Request) => {
  * Récupère données OHLC historiques
  */
 async function fetchHistoricalData(days: number): Promise<OHLCData[]> {
-  // Try CoinGecko first
+  // Try CoinGecko first (timeout 30s)
   try {
     const response = await fetch(
       `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=hourly`,
-      { signal: AbortSignal.timeout(15000) }
+      { signal: AbortSignal.timeout(30000) }
     );
 
     if (response.ok) {
       const data = await response.json();
+      console.log('[backtest] CoinGecko success:', data.prices?.length, 'candles');
       return data.prices.map((p: any, i: number) => ({
         timestamp: p[0],
         open: p[1],
@@ -217,25 +218,35 @@ async function fetchHistoricalData(days: number): Promise<OHLCData[]> {
     console.warn('[backtest] CoinGecko failed:', e.message);
   }
 
-  // Fallback: Binance
-  const endTime = Date.now();
-  const startTime = endTime - (days * 24 * 60 * 60 * 1000);
+  // Fallback: Binance (timeout 30s)
+  try {
+    const endTime = Date.now();
+    const startTime = endTime - (days * 24 * 60 * 60 * 1000);
 
-  const response = await fetch(
-    `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&startTime=${startTime}&endTime=${endTime}&limit=1000`
-  );
+    const response = await fetch(
+      `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&startTime=${startTime}&endTime=${endTime}&limit=1000`,
+      { signal: AbortSignal.timeout(30000) }
+    );
 
-  if (!response.ok) throw new Error('Failed to fetch historical data');
+    if (!response.ok) {
+      throw new Error(`Binance API error: ${response.status}`);
+    }
 
-  const klines = await response.json();
-  return klines.map((k: any) => ({
-    timestamp: k[0],
-    open: parseFloat(k[1]),
-    high: parseFloat(k[2]),
-    low: parseFloat(k[3]),
-    close: parseFloat(k[4]),
-    volume: parseFloat(k[5])
-  }));
+    console.log('[backtest] Binance success');
+
+    const klines = await response.json();
+    return klines.map((k: any) => ({
+      timestamp: k[0],
+      open: parseFloat(k[1]),
+      high: parseFloat(k[2]),
+      low: parseFloat(k[3]),
+      close: parseFloat(k[4]),
+      volume: parseFloat(k[5])
+    }));
+  } catch (e) {
+    console.error('[backtest] Binance failed:', e.message);
+    throw new Error('Failed to fetch historical data from both CoinGecko and Binance');
+  }
 }
 
 /**
