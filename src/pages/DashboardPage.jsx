@@ -139,7 +139,7 @@ export default function DashboardPage() {
       <Sidebar profile={profile} />
 
       <div className="flex-1 overflow-auto">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -147,20 +147,21 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-2">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-2">
                   Dashboard Crypto
                 </h1>
-                <p className="text-gray-400">
+                <p className="text-sm md:text-base text-gray-400">
                   L'IA analyse le marché et affiche les opportunités en temps réel.
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-semibold">Système Opérationnel</span>
+              <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-3 md:px-4 py-1.5 md:py-2">
+                  <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
+                  <span className="text-xs md:text-sm font-semibold hidden sm:inline">Système Opérationnel</span>
+                  <span className="text-xs md:text-sm font-semibold sm:hidden">OK</span>
                 </div>
-                <div className="text-sm text-gray-400">
-                  <Wifi className="w-4 h-4 inline mr-1" />
+                <div className="text-xs md:text-sm text-gray-400 hidden lg:block">
+                  <Wifi className="w-3 h-3 md:w-4 md:h-4 inline mr-1" />
                   Dernier signal: il y a 359m
                 </div>
               </div>
@@ -170,7 +171,7 @@ export default function DashboardPage() {
           <div className="space-y-6">
             <ScanRecommendation signal={latestSignal} />
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
               <div className="lg:col-span-2">
                 <MarketHeatmap marketData={marketData} />
               </div>
@@ -179,20 +180,20 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <div>
                 <LiveSignals isPremium={true} />
               </div>
               <div>
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold mb-4">Derniers Signaux Détectés</h3>
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 md:p-6">
+                  <h3 className="text-lg md:text-xl font-bold mb-4">Derniers Signaux Détectés</h3>
                   <LiveSignalTimeline />
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <h3 className="text-xl md:text-2xl font-bold mb-4 flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 Marché en Direct
               </h3>

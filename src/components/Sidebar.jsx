@@ -30,14 +30,15 @@ export default function Sidebar({ profile }) {
   };
 
   return (
-    <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col h-screen sticky top-0">
+    <aside className="w-64 lg:w-64 md:w-20 sm:w-16 bg-gray-900 border-r border-gray-800 flex flex-col h-screen sticky top-0 transition-all">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-800">
+      <div className="p-6 md:p-4 sm:p-2 border-b border-gray-800">
         <Link to="/" className="block">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-white via-red-500 to-white bg-clip-text text-transparent">
+          <h1 className="text-xl md:text-sm font-bold bg-gradient-to-r from-white via-red-500 to-white bg-clip-text text-transparent md:hidden">
             NEURA TRADE AI
           </h1>
-          <p className="text-xs text-gray-500 mt-1">Intelligence Artificielle</p>
+          <h1 className="text-xl font-bold text-red-500 hidden md:block">NT</h1>
+          <p className="text-xs text-gray-500 mt-1 md:hidden">Intelligence Artificielle</p>
         </Link>
       </div>
 
@@ -67,14 +68,14 @@ export default function Sidebar({ profile }) {
             }`}
           >
             <item.icon className="w-5 h-5" />
-            <span className="font-medium">{item.label}</span>
+            <span className="font-medium md:hidden">{item.label}</span>
           </Link>
         ))}
       </nav>
 
       {/* Upgrade CTA (if not premium) */}
       {!isPremium && (
-        <div className="m-4 p-4 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg">
+        <div className="m-4 md:m-2 p-4 md:p-2 bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg md:hidden">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-5 h-5 text-red-500" />
             <span className="font-bold text-sm">Passez à Premium</span>
@@ -98,7 +99,7 @@ export default function Sidebar({ profile }) {
           className="flex items-center gap-3 w-full px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Déconnexion</span>
+          <span className="font-medium md:hidden">Déconnexion</span>
         </button>
       </div>
     </aside>
