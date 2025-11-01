@@ -16,7 +16,8 @@ const LiveMarketTable = () => {
       const { data, error } = await supabase
         .from('crypto_watchlist')
         .select('symbol')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .in('symbol', ['BTCUSDT', 'ETHUSDT']);
 
       if (error) {
         console.error('Error fetching watchlist:', error);

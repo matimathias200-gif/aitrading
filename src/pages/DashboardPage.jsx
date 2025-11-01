@@ -10,7 +10,6 @@ import ScanRecommendation from '../components/ScanRecommendation';
 import MarketHeatmap from '../components/MarketHeatmap';
 import AiControlPanel from '../components/AiControlPanel';
 import LiveMarketTable from '../components/LiveMarketTable';
-import SystemDiagnostics from '../components/SystemDiagnostics';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -195,13 +194,9 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Marché en Direct
+                Marché en Direct (BTC & ETH)
               </h3>
               <LiveMarketTable />
-            </div>
-
-            <div>
-              <SystemDiagnostics />
             </div>
           </div>
         </div>
