@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/SupabaseAuthContext';
 import { supabase } from '../lib/customSupabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import LiveSignals from '../components/LiveSignals';
+import Sidebar from '../components/Sidebar';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -70,40 +71,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/landing" className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-red-500 to-white bg-clip-text text-transparent">
-                NEURA TRADE AI
-              </h1>
-            </Link>
+    <div className="min-h-screen bg-black text-white flex">
+      {/* Sidebar */}
+      <Sidebar profile={profile} />
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-sm text-gray-400">Compte</div>
-                <div className="font-semibold">{user?.email}</div>
-              </div>
-              <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                isPremium
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black'
-                  : 'bg-gray-700 text-gray-300'
-              }`}>
-                {isPremium ? (
-                  <span className="flex items-center gap-1">
-                    <Crown className="w-3 h-3" />
-                    PREMIUM
-                  </span>
-                ) : 'FREE'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -208,6 +182,7 @@ export default function DashboardPage() {
             </div>
           </motion.div>
         )}
+        </div>
       </div>
     </div>
   );

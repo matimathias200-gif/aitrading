@@ -7,7 +7,7 @@ export default function LegalPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Link to="/landing" className="inline-flex items-center gap-2 text-red-500 hover:text-red-400 mb-8">
+        <Link to="/" className="inline-flex items-center gap-2 text-red-500 hover:text-red-400 mb-8">
           <ArrowLeft className="w-5 h-5" />
           Retour
         </Link>

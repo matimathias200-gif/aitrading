@@ -149,20 +149,20 @@ function App() {
         <meta name="description" content="Plateforme d'analyse et de génération de signaux de trading pour les crypto-monnaies, pilotée par l'IA." />
       </Helmet>
       <div className="min-h-screen pb-8 bg-background text-foreground">
-        <AutoSignalGenerator />
         <Routes>
-            {/* Public Routes */}
-            <Route path="/landing" element={<LandingPage />} />
+            {/* PUBLIC ROUTES - Landing & Marketing */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signup" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/legal" element={<LegalPage />} />
 
-            {/* Dashboard Routes */}
+            {/* PRIVATE ROUTES - Dashboard IA (Protected) */}
+            <Route path="/app" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
 
-            {/* Old Routes (keep for compatibility) */}
-            <Route path="/" element={<Layout />}>
+            {/* OLD ROUTES - Compatibility (will be removed later) */}
+            <Route path="/old" element={<Layout />}>
                 <Route index element={
                     <CryptoDashboard
                       signals={signals}

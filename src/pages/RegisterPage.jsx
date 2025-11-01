@@ -43,7 +43,7 @@ export default function RegisterPage() {
       if (error) throw error;
 
       setSuccess(true);
-      setTimeout(() => navigate('/dashboard'), 2000);
+      setTimeout(() => navigate('/app'), 2000);
     } catch (error) {
       setError(error.message || 'Erreur lors de l\'inscription');
     } finally {
@@ -61,7 +61,7 @@ export default function RegisterPage() {
         className="relative w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <Link to="/landing" className="inline-block mb-6">
+          <Link to="/" className="inline-block mb-6">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-red-500 to-white bg-clip-text text-transparent">
               NEURA TRADE AI
             </h1>
@@ -183,7 +183,7 @@ export default function RegisterPage() {
         )}
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <Link to="/landing" className="hover:text-gray-400 transition-colors">
+          <Link to="/" className="hover:text-gray-400 transition-colors">
             ← Retour à l'accueil
           </Link>
         </div>

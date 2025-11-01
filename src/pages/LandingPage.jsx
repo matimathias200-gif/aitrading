@@ -103,22 +103,23 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <motion.button
-                onClick={() => document.getElementById('demo-form').scrollIntoView({ behavior: 'smooth' })}
-                className="group relative inline-flex items-center gap-3 px-8 py-4 bg-red-500 hover:bg-red-600 text-white text-lg font-bold rounded-full transition-all duration-300 shadow-lg shadow-red-500/50 hover:shadow-red-500/80"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Accéder à l'IA
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
+              <Link to="/signup">
+                <motion.button
+                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-red-500 hover:bg-red-600 text-white text-lg font-bold rounded-full transition-all duration-300 shadow-lg shadow-red-500/50 hover:shadow-red-500/80"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Commencer Maintenant
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </Link>
 
               <Link
                 to="/login"
                 className="group inline-flex items-center gap-3 px-8 py-4 bg-white/10 hover:bg-white/20 text-white text-lg font-bold rounded-full transition-all duration-300 border border-white/20"
               >
                 <Play className="w-5 h-5" />
-                Voir la Démo
+                J'ai déjà un compte
               </Link>
             </div>
 
@@ -292,7 +293,7 @@ export default function LandingPage() {
 
             <div className="mt-6 text-center">
               <Link
-                to="/register"
+                to="/signup"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full transition-all"
               >
                 Accéder à tous les signaux
@@ -368,7 +369,7 @@ export default function LandingPage() {
                   Notre équipe va vous contacter sous 24h pour planifier votre démonstration personnalisée.
                 </p>
                 <Link
-                  to="/register"
+                  to="/signup"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full transition-all"
                 >
                   Créer un compte maintenant

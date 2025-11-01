@@ -21,7 +21,7 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
       if (error) throw error;
 
-      navigate('/dashboard');
+      navigate('/app');
     } catch (error) {
       setError(error.message || 'Erreur de connexion');
     } finally {
@@ -39,7 +39,7 @@ export default function LoginPage() {
         className="relative w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <Link to="/landing" className="inline-block mb-6">
+          <Link to="/" className="inline-block mb-6">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-red-500 to-white bg-clip-text text-transparent">
               NEURA TRADE AI
             </h1>
@@ -115,14 +115,14 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-400">Pas encore de compte ? </span>
-            <Link to="/register" className="text-red-500 hover:text-red-400 font-semibold transition-colors">
+            <Link to="/signup" className="text-red-500 hover:text-red-400 font-semibold transition-colors">
               Créer un compte
             </Link>
           </div>
         </div>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <Link to="/landing" className="hover:text-gray-400 transition-colors">
+          <Link to="/" className="hover:text-gray-400 transition-colors">
             ← Retour à l'accueil
           </Link>
         </div>
