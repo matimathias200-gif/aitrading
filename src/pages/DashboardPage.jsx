@@ -10,6 +10,7 @@ import ScanRecommendation from '../components/ScanRecommendation';
 import MarketHeatmap from '../components/MarketHeatmap';
 import AiControlPanel from '../components/AiControlPanel';
 import LiveMarketTable from '../components/LiveMarketTable';
+import SystemDiagnostics from '../components/SystemDiagnostics';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -197,6 +198,10 @@ export default function DashboardPage() {
                 Marché en Direct
               </h3>
               <LiveMarketTable />
+            </div>
+
+            <div>
+              <SystemDiagnostics />
             </div>
           </div>
         </div>

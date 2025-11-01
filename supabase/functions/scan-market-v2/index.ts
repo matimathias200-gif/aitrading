@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 /**
- * SCAN-MARKET V2 - BTC ONLY avec API Logging détaillé
- * Scanne Bitcoin toutes les 10 minutes
+ * SCAN-MARKET V2 - BTC & ETH avec API Logging détaillé
+ * Scanne Bitcoin et Ethereum toutes les 10 minutes
  * Log chaque appel API dans api_logs
  * Utilise Claude Haiku 4.0
  */
@@ -29,22 +29,56 @@ Deno.serve(async (req: Request) => {
     const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
     if (!claudeApiKey) throw new Error('CLAUDE_API_KEY not configured');
 
-    console.log('[scan-market-v2] Starting BTC ONLY scan with API logging...');
+    console.log('[scan-market-v2] Starting BTC & ETH scan with API logging...');
 
+    // Scan both BTC and ETH in parallel
+    const [btcResult, ethResult] = await Promise.all([
+      scanAsset('bitcoin', 'BTC', 'BTCUSDT', supabase, claudeApiKey),
+      scanAsset('ethereum', 'ETH', 'ETHUSDT', supabase, claudeApiKey)
+    ]);
+
+    console.log('[scan-market-v2] Scan completed successfully');
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        results: {
+          btc: btcResult,
+          eth: ethResult
+        },
+        latency_ms: Date.now() - startTime
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('[scan-market-v2] Error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
+
+async function scanAsset(coinId: string, symbol: string, tradingPair: string, supabase: any, claudeApiKey: string) {
+  const start = Date.now();
+
+  try {
     // STEP 1: Fetch CoinGecko
     const marketData = await loggedApiFetch(
       supabase,
-      'CoinGecko',
-      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true',
+      `CoinGecko-${symbol}`,
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`,
       async (res) => {
         const data = await res.json();
+        const coin = data[coinId];
         return {
-          price: data.bitcoin.usd,
-          change24h: data.bitcoin.usd_24h_change || 0,
-          volume24h: data.bitcoin.usd_24h_vol || 0,
-          marketCap: data.bitcoin.usd_market_cap,
-          high24h: data.bitcoin.usd * 1.02,
-          low24h: data.bitcoin.usd * 0.98
+          price: coin.usd,
+          change24h: coin.usd_24h_change || 0,
+          volume24h: coin.usd_24h_vol || 0,
+          marketCap: coin.usd_market_cap,
+          high24h: coin.usd * 1.02,
+          low24h: coin.usd * 0.98
         };
       }
     );
@@ -56,16 +90,16 @@ Deno.serve(async (req: Request) => {
       try {
         cmcData = await loggedApiFetch(
           supabase,
-          'CoinMarketCap',
-          'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC',
+          `CoinMarketCap-${symbol}`,
+          `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`,
           async (res) => {
             const data = await res.json();
-            return { dominance: data.data.BTC.quote.USD.market_cap_dominance };
+            return { dominance: data.data[symbol].quote.USD.market_cap_dominance };
           },
           { 'X-CMC_PRO_API_KEY': cmcApiKey, 'Accept': 'application/json' }
         );
       } catch (e) {
-        console.warn('[CMC] Optional API failed:', e.message);
+        console.warn(`[CMC-${symbol}] Optional API failed:`, e.message);
       }
     }
 
@@ -76,8 +110,8 @@ Deno.serve(async (req: Request) => {
       try {
         newsData = await loggedApiFetch(
           supabase,
-          'CryptoPanic',
-          `https://cryptopanic.com/api/v1/posts/?auth_token=${cpApiKey}&currencies=BTC&filter=hot&public=true`,
+          `CryptoPanic-${symbol}`,
+          `https://cryptopanic.com/api/v1/posts/?auth_token=${cpApiKey}&currencies=${symbol}&filter=hot&public=true`,
           async (res) => {
             const data = await res.json();
             const posts = data.results || [];
@@ -93,7 +127,7 @@ Deno.serve(async (req: Request) => {
           }
         );
       } catch (e) {
-        console.warn('[CryptoPanic] Optional API failed:', e.message);
+        console.warn(`[CryptoPanic-${symbol}] Optional API failed:`, e.message);
       }
     }
 
@@ -109,45 +143,36 @@ Deno.serve(async (req: Request) => {
 
     // STEP 5: Cache dans api_cache
     await supabase.from('api_cache').upsert({
-      api_name: 'scan_market_btc',
+      api_name: `scan_market_${symbol.toLowerCase()}`,
       source: 'combined',
       response_data: combinedData,
       fetched_at: new Date().toISOString()
     });
 
     // STEP 6: Analyse avec Claude Haiku 4.0
-    const analysis = await analyzeWithClaude(combinedData, claudeApiKey, supabase);
+    const analysis = await analyzeWithClaude(symbol, combinedData, claudeApiKey, supabase);
 
     // STEP 7: Log function execution
     await supabase.from('function_logs').insert({
       function_name: 'scan-market-v2',
       model_name: 'claude-3-5-haiku-20241022',
       success: true,
-      latency_ms: Date.now() - startTime,
-      metadata: { analysis }
+      latency_ms: Date.now() - start,
+      metadata: { symbol: tradingPair, analysis }
     });
 
-    console.log('[scan-market-v2] Scan completed successfully');
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        symbol: 'BTCUSDT',
-        data: combinedData,
-        analysis,
-        latency_ms: Date.now() - startTime
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return {
+      symbol: tradingPair,
+      data: combinedData,
+      analysis,
+      latency_ms: Date.now() - start
+    };
 
   } catch (error) {
-    console.error('[scan-market-v2] Error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error(`[scan-market-v2] Error scanning ${symbol}:`, error);
+    throw error;
   }
-});
+}
 
 /**
  * Fetch API avec logging automatique dans api_logs
@@ -208,11 +233,11 @@ async function loggedApiFetch(
 /**
  * Analyse avec Claude Haiku 4.0
  */
-async function analyzeWithClaude(data: any, apiKey: string, supabase: any): Promise<string> {
+async function analyzeWithClaude(symbol: string, data: any, apiKey: string, supabase: any): Promise<string> {
   const start = Date.now();
 
   try {
-    const prompt = `Analyse rapide Bitcoin en français (2-3 phrases max).
+    const prompt = `Analyse rapide ${symbol} en français (2-3 phrases max).
 
 Prix: ${data.market.price} USD
 Change 24h: ${data.market.change24h}%
@@ -239,7 +264,7 @@ Donne: tendance (bullish/bearish/neutral) + raison principale.`;
 
     if (!response.ok) {
       await supabase.rpc('log_api_call', {
-        p_api_name: 'Claude-Haiku',
+        p_api_name: `Claude-Haiku-${symbol}`,
         p_endpoint: 'anthropic.com/v1/messages',
         p_status: 'ERROR',
         p_status_code: response.status,
@@ -252,7 +277,7 @@ Donne: tendance (bullish/bearish/neutral) + raison principale.`;
     const result = await response.json();
 
     await supabase.rpc('log_api_call', {
-      p_api_name: 'Claude-Haiku',
+      p_api_name: `Claude-Haiku-${symbol}`,
       p_endpoint: 'anthropic.com/v1/messages',
       p_status: 'OK',
       p_status_code: 200,
@@ -263,7 +288,7 @@ Donne: tendance (bullish/bearish/neutral) + raison principale.`;
     return result.content[0].text;
 
   } catch (error) {
-    console.error('[Claude] Error:', error);
+    console.error(`[Claude-${symbol}] Error:`, error);
     return 'Analyse échouée';
   }
 }
