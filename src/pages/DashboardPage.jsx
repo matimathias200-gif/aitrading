@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { TrendingUp, Zap, Activity, DollarSign, AlertCircle, Lock, Crown } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/SupabaseAuthContext';
 import { supabase } from '../lib/customSupabaseClient';
-import { Link, useNavigate } from 'react-router-dom';
-import LiveSignals from '../components/LiveSignals';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import CryptoDashboard from '../components/CryptoDashboard';
+import { useToast } from '../components/ui/use-toast';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [signals, setSignals] = useState([]);
+  const [marketData, setMarketData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    sensitivity_level: 3,
+    notifications_enabled: true,
+    risk_profile: 'modéré'
+  });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -20,7 +28,9 @@ export default function DashboardPage() {
     }
 
     fetchProfile();
-  }, [user]);
+    fetchInitialData();
+    fetchSettings(user.id);
+  }, [user, navigate]);
 
   const fetchProfile = async () => {
     try {
@@ -32,7 +42,6 @@ export default function DashboardPage() {
 
       if (error) throw error;
 
-      // If profile doesn't exist, create it
       if (!data) {
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
@@ -52,19 +61,130 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const isPremium = profile?.subscription_status === 'active';
+  const fetchSettings = useCallback(async (userId) => {
+    if (!userId) return;
 
-  if (loading) {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('sensitivity_level, notifications_enabled, risk_profile, last_scan_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (data) {
+        setSettings(prev => ({...prev, ...data}));
+      } else if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching settings", error);
+      }
+    } catch (error) {
+      console.error('Settings fetch error:', error);
+    }
+  }, []);
+
+  const fetchInitialData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [signalsResult, marketDataResult] = await Promise.all([
+        supabase
+          .from('crypto_signals')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('crypto_market_data')
+          .select('*')
+          .order('volume_24h', { ascending: false })
+      ]);
+
+      if (signalsResult.error) {
+        console.error('Signals fetch error:', signalsResult.error);
+      } else {
+        setSignals(signalsResult.data || []);
+      }
+
+      if (marketDataResult.error) {
+        console.error('Market data fetch error:', marketDataResult.error);
+      } else {
+        setMarketData(marketDataResult.data || []);
+      }
+
+    } catch (error) {
+      console.error("Error during initial data fetch:", error);
+      toast({
+        title: "Erreur de synchronisation",
+        description: "Impossible de récupérer les données initiales.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!user) return;
+
+    const notificationsEnabled = settings.notifications_enabled;
+
+    const signalsChannel = supabase
+      .channel('crypto_signals_updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'crypto_signals'
+      }, (payload) => {
+        console.log('[REALTIME] Signal update:', payload);
+
+        if (payload.eventType === 'INSERT') {
+          setSignals(prev => [payload.new, ...prev]);
+
+          if (notificationsEnabled && payload.new.signal_type !== 'WAIT') {
+            toast({
+              title: `🔔 Nouveau signal ${payload.new.signal_type}`,
+              description: `${payload.new.symbol} - Confiance: ${payload.new.confidence}%`,
+              duration: 5000
+            });
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          setSignals(prev => prev.map(s => s.id === payload.new.id ? payload.new : s));
+        } else if (payload.eventType === 'DELETE') {
+          setSignals(prev => prev.filter(s => s.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
+    const marketDataChannel = supabase
+      .channel('crypto_market_data_updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'crypto_market_data'
+      }, (payload) => {
+        console.log('[REALTIME] Market data update:', payload);
+
+        if (payload.eventType === 'INSERT') {
+          setMarketData(prev => [payload.new, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setMarketData(prev => prev.map(m => m.symbol === payload.new.symbol ? payload.new : m));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(signalsChannel);
+      supabase.removeChannel(marketDataChannel);
+    };
+  }, [user, settings.notifications_enabled, toast]);
+
+  if (!user || isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Chargement...</p>
+          <Loader2 className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Chargement du dashboard IA...</p>
         </div>
       </div>
     );
@@ -75,113 +195,17 @@ export default function DashboardPage() {
       {/* Sidebar */}
       <Sidebar profile={profile} />
 
-      {/* Main Content */}
+      {/* Main Content - Full IA Dashboard */}
       <div className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h2 className="text-3xl font-bold mb-2">
-            Bienvenue sur votre Dashboard IA
-          </h2>
-          <p className="text-gray-400">
-            Accédez aux signaux de trading générés par notre intelligence artificielle propriétaire
-          </p>
-        </motion.div>
-
-        {/* Premium Upgrade Banner */}
-        {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gradient-to-r from-red-500/10 via-orange-500/10 to-yellow-500/10 border border-red-500/20 rounded-2xl p-6"
-          >
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <Crown className="w-12 h-12 text-yellow-500" />
-                <div>
-                  <h3 className="text-xl font-bold mb-1">Passez à Premium</h3>
-                  <p className="text-gray-400 text-sm">
-                    Accédez à tous les signaux en temps réel et aux analyses avancées
-                  </p>
-                </div>
-              </div>
-              <Link
-                to="/pricing"
-                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold rounded-full hover:shadow-lg hover:shadow-red-500/50 transition-all"
-              >
-                Voir les Plans
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {[
-            { icon: TrendingUp, label: 'Signaux Actifs', value: isPremium ? '12' : '3', color: 'text-green-500' },
-            { icon: Zap, label: 'Précision Moyenne', value: '98.7%', color: 'text-blue-500' },
-            { icon: Activity, label: 'Trades Aujourd\'hui', value: isPremium ? '8' : '2', color: 'text-purple-500' },
-            { icon: DollarSign, label: 'ROI Estimé', value: isPremium ? '+24%' : '+12%', color: 'text-yellow-500' }
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 transition-all"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                {!isPremium && index > 0 && (
-                  <Lock className="w-4 h-4 text-gray-600" />
-                )}
-              </div>
-              <div className="text-3xl font-bold mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Live Signals Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <LiveSignals isPremium={isPremium} />
-        </motion.div>
-
-        {/* Free Plan Limitation */}
-        {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 bg-gray-900/50 border border-gray-800 rounded-xl p-8 text-center"
-          >
-            <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Débloquez Tous les Signaux</h3>
-            <p className="text-gray-400 mb-6">
-              Le plan gratuit vous donne accès à 3 signaux. Passez à Premium pour accéder
-              à tous les signaux en temps réel, analyses avancées et notifications instantanées.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Link
-                to="/pricing"
-                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full transition-all"
-              >
-                Voir les Plans Premium
-              </Link>
-              <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full transition-all">
-                En savoir plus
-              </button>
-            </div>
-          </motion.div>
-        )}
+          <CryptoDashboard
+            signals={signals}
+            marketData={marketData}
+            isLoading={isLoading}
+            user={user}
+            settings={settings}
+            setSettings={setSettings}
+          />
         </div>
       </div>
     </div>

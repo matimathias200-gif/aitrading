@@ -149,6 +149,7 @@ function App() {
         <meta name="description" content="Plateforme d'analyse et de génération de signaux de trading pour les crypto-monnaies, pilotée par l'IA." />
       </Helmet>
       <div className="min-h-screen pb-8 bg-background text-foreground">
+        <AutoSignalGenerator />
         <Routes>
             {/* PUBLIC ROUTES - Landing & Marketing */}
             <Route path="/" element={<LandingPage />} />
