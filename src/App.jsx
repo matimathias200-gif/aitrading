@@ -19,6 +19,9 @@ import DashboardPage from '@/pages/DashboardPage';
 import PricingPage from '@/pages/PricingPage';
 import LegalPage from '@/pages/LegalPage';
 import AutoSignalGenerator from '@/components/AutoSignalGenerator';
+import AnalysisLivePage from '@/pages/AnalysisLivePage';
+import HistoryPage from '@/pages/HistoryPage';
+import ProfilePage from '@/pages/ProfilePage';
 
 function App() {
   const [signals, setSignals] = useState([]);
@@ -159,6 +162,9 @@ function App() {
 
             {/* PRIVATE ROUTES - Dashboard IA (Protected) */}
             <Route path="/app" element={<DashboardPage />} />
+            <Route path="/app/analysis" element={<AnalysisLivePage />} />
+            <Route path="/app/history" element={<HistoryPage />} />
+            <Route path="/app/profile" element={<ProfilePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
 
             {/* OLD ROUTES - Compatibility (will be removed later) */}
