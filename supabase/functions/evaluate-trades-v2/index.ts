@@ -6,12 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-/**
- * EVALUATE-TRADES V2 - Avec Pattern Learning
- * Évalue les signaux ET met à jour les patterns
- * Apprentissage automatique du win rate par pattern
- */
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -25,7 +19,6 @@ Deno.serve(async (req: Request) => {
 
     console.log('[evaluate-trades-v2] Starting evaluation with pattern learning...');
 
-    // 1. Get signals to evaluate (> 1h old, not evaluated)
     const { data: signals, error: signalsError } = await supabase
       .from('crypto_signals')
       .select('*')
@@ -45,7 +38,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[evaluate-trades-v2] Found ${signals.length} signals to evaluate`);
 
-    // 2. Get current BTC price
     let currentPrice = 0;
     try {
       const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
@@ -65,7 +57,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[evaluate-trades-v2] Current BTC price: ${currentPrice}`);
 
-    // 3. Evaluate each signal
     let evaluated = 0;
     const results = [];
 
@@ -79,7 +70,6 @@ Deno.serve(async (req: Request) => {
       let profitPct = 0;
       let exitPrice = currentPrice;
 
-      // Evaluate BUY signal
       if (signalType === 'BUY') {
         if (currentPrice >= takeProfit) {
           result = 'WIN';
@@ -99,7 +89,6 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // Evaluate SELL signal
       else if (signalType === 'SELL') {
         if (currentPrice <= takeProfit) {
           result = 'WIN';
@@ -119,9 +108,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // Only process if result is determined
       if (result !== 'NEUTRAL' || signal.horizon_minutes) {
-        // Insert feedback
         await supabase.from('trade_feedback').insert({
           signal_id: signal.id,
           symbol: 'BTCUSDT',
@@ -135,19 +122,15 @@ Deno.serve(async (req: Request) => {
           is_manual_feedback: false
         });
 
-        // Update signal status
         await supabase.from('crypto_signals').update({
           status: result === 'WIN' ? 'completed' : result === 'LOSS' ? 'failed' : 'expired',
           evaluated_at: new Date().toISOString()
         }).eq('id', signal.id);
 
-        // ✨ PATTERN LEARNING ✨
-        // Extract pattern from signal reason
         try {
           const reason = typeof signal.reason === 'string' ? JSON.parse(signal.reason) : signal.reason;
           const patternName = reason.pattern || 'unknown_pattern';
 
-          // Update pattern statistics
           await supabase.rpc('update_signal_pattern', {
             p_pattern_name: patternName,
             p_pattern_conditions: {
@@ -176,7 +159,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 4. Update reputation
     await updateReputation(supabase);
 
     console.log(`[evaluate-trades-v2] Evaluated ${evaluated} signals`);
@@ -200,9 +182,6 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-/**
- * Update BTC reputation based on all feedback
- */
 async function updateReputation(supabase: any) {
   const { data: feedback } = await supabase
     .from('trade_feedback')

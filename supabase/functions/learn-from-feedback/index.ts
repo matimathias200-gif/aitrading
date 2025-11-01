@@ -17,7 +17,6 @@ Deno.serve(async (req: Request) => {
     const claudeApiKey = Deno.env.get('CLAUDE_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch feedback from last 30 days
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     
     const { data: feedback, error: feedbackError } = await supabase
@@ -53,7 +52,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Analyze feedback statistics
     const stats = {
       total_feedback: feedback.length,
       successful: feedback.filter(f => f.feedback_type === 'success').length,
@@ -63,7 +61,6 @@ Deno.serve(async (req: Request) => {
       by_signal_type: {} as Record<string, any>
     };
 
-    // Group by symbol
     feedback.forEach(f => {
       const symbol = f.crypto_signals?.symbol || 'unknown';
       if (!stats.by_symbol[symbol]) {
@@ -75,7 +72,6 @@ Deno.serve(async (req: Request) => {
       stats.by_symbol[symbol].total_pl += f.profit_loss || 0;
     });
 
-    // Group by signal type
     feedback.forEach(f => {
       const signalType = f.crypto_signals?.signal_type || 'unknown';
       if (!stats.by_signal_type[signalType]) {
@@ -89,7 +85,6 @@ Deno.serve(async (req: Request) => {
 
     const winRate = stats.total_feedback > 0 ? (stats.successful / stats.total_feedback * 100).toFixed(1) : 0;
 
-    // Build prompt for Claude AI
     const prompt = `Tu es un expert en trading algorithmique. Analyse les performances suivantes et donne des recommandations d'amélioration.
 
 STATISTIQUES DES 30 DERNIERS JOURS:
@@ -129,7 +124,6 @@ Réponds en JSON (sans markdown):
   }
 }`;
 
-    // Call Claude AI
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -154,7 +148,6 @@ Réponds en JSON (sans markdown):
     const claudeData = await claudeResponse.json();
     const aiResponseText = claudeData.content[0].text;
 
-    // Parse AI response
     let analysis;
     try {
       const cleanedText = aiResponseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -164,7 +157,6 @@ Réponds en JSON (sans markdown):
       throw new Error(`Invalid JSON response from Claude AI: ${parseError.message}`);
     }
 
-    // Store analysis in database
     const { error: insertError } = await supabase
       .from('ai_learning_logs')
       .insert({

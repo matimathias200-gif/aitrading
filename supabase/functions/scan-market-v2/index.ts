@@ -6,13 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-/**
- * SCAN-MARKET V2 - BTC & ETH avec API Logging détaillé
- * Scanne Bitcoin et Ethereum toutes les 10 minutes
- * Log chaque appel API dans api_logs
- * Utilise Claude Haiku 4.0
- */
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -31,7 +24,6 @@ Deno.serve(async (req: Request) => {
 
     console.log('[scan-market-v2] Starting BTC & ETH scan with API logging...');
 
-    // Scan both BTC and ETH in parallel
     const [btcResult, ethResult] = await Promise.all([
       scanAsset('bitcoin', 'BTC', 'BTCUSDT', supabase, claudeApiKey),
       scanAsset('ethereum', 'ETH', 'ETHUSDT', supabase, claudeApiKey)
@@ -64,7 +56,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
   const start = Date.now();
 
   try {
-    // STEP 1: Fetch CoinGecko
     const marketData = await loggedApiFetch(
       supabase,
       `CoinGecko-${symbol}`,
@@ -83,7 +74,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
       }
     );
 
-    // STEP 2: Fetch CoinMarketCap (optionnel)
     let cmcData = { dominance: null };
     const cmcApiKey = Deno.env.get('CMC_API_KEY');
     if (cmcApiKey) {
@@ -103,7 +93,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
       }
     }
 
-    // STEP 3: Fetch CryptoPanic News
     let newsData = { count: 0, sentiment: 'neutral', headlines: [] };
     const cpApiKey = Deno.env.get('CRYPTOPANIC_API_KEY');
     if (cpApiKey) {
@@ -131,7 +120,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
       }
     }
 
-    // STEP 4: Combine data
     const combinedData = {
       market: {
         ...marketData,
@@ -141,7 +129,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
       timestamp: new Date().toISOString()
     };
 
-    // STEP 5: Cache dans api_cache
     await supabase.from('api_cache').upsert({
       api_name: `scan_market_${symbol.toLowerCase()}`,
       source: 'combined',
@@ -149,10 +136,8 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
       fetched_at: new Date().toISOString()
     });
 
-    // STEP 6: Analyse avec Claude Haiku 4.0
     const analysis = await analyzeWithClaude(symbol, combinedData, claudeApiKey, supabase);
 
-    // STEP 7: Log function execution
     await supabase.from('function_logs').insert({
       function_name: 'scan-market-v2',
       model_name: 'claude-3-5-haiku-20241022',
@@ -174,9 +159,6 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
   }
 }
 
-/**
- * Fetch API avec logging automatique dans api_logs
- */
 async function loggedApiFetch(
   supabase: any,
   apiName: string,
@@ -230,9 +212,6 @@ async function loggedApiFetch(
   }
 }
 
-/**
- * Analyse avec Claude Haiku 4.0
- */
 async function analyzeWithClaude(symbol: string, data: any, apiKey: string, supabase: any): Promise<string> {
   const start = Date.now();
 

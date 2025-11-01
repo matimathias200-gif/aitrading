@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
 
     const reputation = rep?.reputation_score || 50;
 
-    const prompt = `Analyse ETHUSDT. Prix: $${market.price}, Var 24h: ${market.change24h}%, RSI: ${rsi.toFixed(2)}, News: ${news.sentiment}, Rep: ${reputation}/100. Retourne JSON (sans markdown): {"symbol":"ETHUSDT","signal_type":"BUY"ou"SELL"ou"WAIT","confidence":0-100,"entry_price":${market.price},"take_profit":<number>,"stop_loss":<number>,"horizon_minutes":240,"position_size_pct":5,"reason":{"explain":"<txt>","indicators":["RSI","prix"]}}`;
+    const prompt = `Analyse ETHUSDT. Prix: $${market.price}, Var 24h: ${market.change24h}%, RSI: ${rsi.toFixed(2)}, News: ${news.sentiment}, Rep: ${reputation}/100. Retourne JSON (sans markdown): {\"symbol\":\"ETHUSDT\",\"signal_type\":\"BUY\"ou\"SELL\"ou\"WAIT\",\"confidence\":0-100,\"entry_price\":${market.price},\"take_profit\":<number>,\"stop_loss\":<number>,\"horizon_minutes\":240,\"position_size_pct\":5,\"reason\":{\"explain\":\"<txt>\",\"indicators\":[\"RSI\",\"prix\"]}}`;
 
     const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
