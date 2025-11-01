@@ -155,7 +155,7 @@ Retourne ta réponse **strictement au format JSON** (sans markdown, sans backtic
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-latest',
         max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -209,7 +209,7 @@ Retourne ta réponse **strictement au format JSON** (sans markdown, sans backtic
     await supabase.from('function_logs').insert({
       function_name: 'generate-btc-signal',
       success: true,
-      model_name: 'claude-3-5-sonnet-20241022',
+      model_name: 'claude-3-5-sonnet-20240620',
       signal_type: signal.signal_type,
       confidence: signal.confidence,
       latency_ms: Date.now() - startTime
@@ -223,13 +223,22 @@ Retourne ta réponse **strictement au format JSON** (sans markdown, sans backtic
   } catch (error) {
     console.error('[generate-btc-signal] Error:', error);
 
-    await supabase.from('function_logs').insert({
-      function_name: 'generate-btc-signal',
-      success: false,
-      model_name: 'claude-3-5-sonnet-20241022',
-      latency_ms: Date.now() - startTime,
-      metadata: { error: error.message }
-    });
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      await supabase.from('function_logs').insert({
+        function_name: 'generate-btc-signal',
+        success: false,
+        model_name: 'claude-3-5-sonnet-20240620',
+        latency_ms: Date.now() - startTime,
+        metadata: { error: error.message }
+      });
+    } catch (logError) {
+      console.error('[generate-btc-signal] Failed to log error:', logError);
+    }
 
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
