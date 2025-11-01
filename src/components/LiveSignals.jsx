@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Clock, Target, AlertTriangle, Lock, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/customSupabaseClient';
 
-export default function LiveSignals({ isPremium }) {
+export default function LiveSignals({ isPremium = true }) {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -11,7 +11,6 @@ export default function LiveSignals({ isPremium }) {
   useEffect(() => {
     fetchSignals();
 
-    // Real-time subscription
     const channel = supabase
       .channel('crypto_signals_live')
       .on('postgres_changes', {
@@ -25,7 +24,6 @@ export default function LiveSignals({ isPremium }) {
       })
       .subscribe();
 
-    // Refresh every 15 seconds
     const interval = setInterval(() => {
       fetchSignals();
       setLastUpdate(new Date());
@@ -44,7 +42,7 @@ export default function LiveSignals({ isPremium }) {
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-        .limit(isPremium ? 20 : 3);
+        .limit(20);
 
       if (error) throw error;
       setSignals(data || []);
@@ -148,7 +146,7 @@ export default function LiveSignals({ isPremium }) {
             </p>
           </motion.div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             {signals.map((signal, index) => (
               <motion.div
                 key={signal.id}
@@ -213,22 +211,11 @@ export default function LiveSignals({ isPremium }) {
                   </div>
                 </div>
 
-                {/* Reason (if premium) */}
-                {isPremium && signal.reason?.explain && (
+                {signal.reason?.explain && (
                   <div className="mt-3 pt-3 border-t border-gray-700/50">
                     <p className="text-xs text-gray-400 line-clamp-2">
                       {signal.reason.explain}
                     </p>
-                  </div>
-                )}
-
-                {/* Lock overlay for free users on signals 4+ */}
-                {!isPremium && index >= 3 && (
-                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                    <div className="text-center">
-                      <Lock className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                      <p className="text-sm font-semibold">Premium Only</p>
-                    </div>
                   </div>
                 )}
               </motion.div>
@@ -237,17 +224,6 @@ export default function LiveSignals({ isPremium }) {
         )}
       </AnimatePresence>
 
-      {/* Free Tier Message */}
-      {!isPremium && signals.length > 0 && (
-        <div className="mt-6 p-4 bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg text-center">
-          <p className="text-sm text-gray-400">
-            Vous voyez {Math.min(signals.length, 3)} signaux sur {signals.length} disponibles.
-            <span className="text-red-500 font-semibold ml-2">
-              Passez à Premium pour tout débloquer.
-            </span>
-          </p>
-        </div>
-      )}
     </div>
   );
 }

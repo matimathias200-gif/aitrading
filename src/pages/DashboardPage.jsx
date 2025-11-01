@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Zap, Activity, DollarSign, AlertCircle, Lock, Crown } from 'lucide-react';
+import { CheckCircle, Wifi } from 'lucide-react';
 import { useAuth } from '../contexts/SupabaseAuthContext';
 import { supabase } from '../lib/customSupabaseClient';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import LiveSignals from '../components/LiveSignals';
 import Sidebar from '../components/Sidebar';
+import ScanRecommendation from '../components/ScanRecommendation';
+import MarketHeatmap from '../components/MarketHeatmap';
+import AiControlPanel from '../components/AiControlPanel';
+import LiveMarketTable from '../components/LiveMarketTable';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [latestSignal, setLatestSignal] = useState(null);
+  const [marketData, setMarketData] = useState([]);
+  const [settings, setSettings] = useState({
+    sensitivity_level: 5,
+    notifications_enabled: true,
+    risk_profile: 'agressif'
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,6 +31,9 @@ export default function DashboardPage() {
     }
 
     fetchProfile();
+    fetchLatestSignal();
+    fetchMarketData();
+    fetchSettings();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -32,7 +46,6 @@ export default function DashboardPage() {
 
       if (error) throw error;
 
-      // If profile doesn't exist, create it
       if (!data) {
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
@@ -57,7 +70,58 @@ export default function DashboardPage() {
     }
   };
 
-  const isPremium = profile?.subscription_status === 'active';
+  const fetchLatestSignal = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('crypto_signals')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setLatestSignal(data);
+    } catch (error) {
+      console.error('Error fetching latest signal:', error);
+    }
+  };
+
+  const fetchMarketData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('crypto_prices')
+        .select('*')
+        .order('change_24h', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setMarketData(data || []);
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setSettings({
+          sensitivity_level: data.sensitivity_level || 5,
+          notifications_enabled: data.notifications_enabled !== false,
+          risk_profile: data.risk_profile || 'agressif'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -72,118 +136,128 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex">
-      {/* Sidebar */}
       <Sidebar profile={profile} />
 
-      {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h2 className="text-3xl font-bold mb-2">
-            Bienvenue sur votre Dashboard IA
-          </h2>
-          <p className="text-gray-400">
-            Accédez aux signaux de trading générés par notre intelligence artificielle propriétaire
-          </p>
-        </motion.div>
-
-        {/* Premium Upgrade Banner */}
-        {!isPremium && (
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gradient-to-r from-red-500/10 via-orange-500/10 to-yellow-500/10 border border-red-500/20 rounded-2xl p-6"
+            className="mb-8"
           >
-            <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-2">
+                  Dashboard Crypto
+                </h1>
+                <p className="text-gray-400">
+                  L'IA analyse le marché et affiche les opportunités en temps réel.
+                </p>
+              </div>
               <div className="flex items-center gap-4">
-                <Crown className="w-12 h-12 text-yellow-500" />
-                <div>
-                  <h3 className="text-xl font-bold mb-1">Passez à Premium</h3>
-                  <p className="text-gray-400 text-sm">
-                    Accédez à tous les signaux en temps réel et aux analyses avancées
-                  </p>
+                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-semibold">Système Opérationnel</span>
+                </div>
+                <div className="text-sm text-gray-400">
+                  <Wifi className="w-4 h-4 inline mr-1" />
+                  Dernier signal: il y a 359m
                 </div>
               </div>
-              <Link
-                to="/pricing"
-                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold rounded-full hover:shadow-lg hover:shadow-red-500/50 transition-all"
-              >
-                Voir les Plans
-              </Link>
             </div>
           </motion.div>
-        )}
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {[
-            { icon: TrendingUp, label: 'Signaux Actifs', value: isPremium ? '12' : '3', color: 'text-green-500' },
-            { icon: Zap, label: 'Précision Moyenne', value: '98.7%', color: 'text-blue-500' },
-            { icon: Activity, label: 'Trades Aujourd\'hui', value: isPremium ? '8' : '2', color: 'text-purple-500' },
-            { icon: DollarSign, label: 'ROI Estimé', value: isPremium ? '+24%' : '+12%', color: 'text-yellow-500' }
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 transition-all"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                {!isPremium && index > 0 && (
-                  <Lock className="w-4 h-4 text-gray-600" />
-                )}
+          <div className="space-y-6">
+            <ScanRecommendation signal={latestSignal} />
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <MarketHeatmap marketData={marketData} />
               </div>
-              <div className="text-3xl font-bold mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Live Signals Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <LiveSignals isPremium={isPremium} />
-        </motion.div>
-
-        {/* Free Plan Limitation */}
-        {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 bg-gray-900/50 border border-gray-800 rounded-xl p-8 text-center"
-          >
-            <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Débloquez Tous les Signaux</h3>
-            <p className="text-gray-400 mb-6">
-              Le plan gratuit vous donne accès à 3 signaux. Passez à Premium pour accéder
-              à tous les signaux en temps réel, analyses avancées et notifications instantanées.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Link
-                to="/pricing"
-                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full transition-all"
-              >
-                Voir les Plans Premium
-              </Link>
-              <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full transition-all">
-                En savoir plus
-              </button>
+              <div>
+                <AiControlPanel settings={settings} setSettings={setSettings} />
+              </div>
             </div>
-          </motion.div>
-        )}
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div>
+                <LiveSignals isPremium={true} />
+              </div>
+              <div>
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold mb-4">Derniers Signaux Détectés</h3>
+                  <LiveSignalTimeline />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Marché en Direct
+              </h3>
+              <LiveMarketTable />
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LiveSignalTimeline() {
+  const [recentSignals, setRecentSignals] = useState([]);
+
+  useEffect(() => {
+    fetchRecentSignals();
+    const interval = setInterval(fetchRecentSignals, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchRecentSignals = async () => {
+    const { data } = await supabase
+      .from('crypto_signals')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (data) setRecentSignals(data);
+  };
+
+  return (
+    <div className="space-y-3">
+      {recentSignals.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">Aucun signal récent</p>
+      ) : (
+        recentSignals.map((signal) => (
+          <motion.div
+            key={signal.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-all"
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              signal.signal_type === 'BUY' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+            }`}>
+              {signal.signal_type === 'BUY' ? '↑' : '↓'}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold">{signal.symbol}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  signal.signal_type === 'BUY' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`}>
+                  {signal.signal_type}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">Confiance: {signal.confidence}%</p>
+            </div>
+            <div className="text-xs text-gray-500">
+              {new Date(signal.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </motion.div>
+        ))
+      )}
     </div>
   );
 }
