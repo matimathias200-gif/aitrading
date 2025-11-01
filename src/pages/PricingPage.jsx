@@ -73,29 +73,21 @@ export default function PricingPage() {
   ];
 
   const handleSubscribe = async (plan) => {
-    // PAIEMENTS TEMPORAIREMENT DÉSACTIVÉS
-    // En attente de l'intégration de l'API de paiement
-
     if (!user) {
-      navigate('/signup');
+      navigate('/register');
       return;
     }
 
     if (plan.name === 'Free') {
-      navigate('/app');
+      navigate('/dashboard');
       return;
     }
 
-    // Afficher message temporaire
-    alert('🔒 Paiements temporairement désactivés\n\nLes abonnements Premium et Pro seront bientôt disponibles.\nL\'intégration du système de paiement crypto est en cours.');
-
-    return;
-
-    /* CODE PAIEMENT - À RÉACTIVER PLUS TARD
     setSelectedPlan(plan);
     setLoading(true);
 
     try {
+      // Call payment API endpoint
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment`, {
         method: 'POST',
         headers: {
@@ -112,6 +104,7 @@ export default function PricingPage() {
       const data = await response.json();
 
       if (data.payment_url) {
+        // Redirect to crypto payment gateway
         window.location.href = data.payment_url;
       } else {
         alert('Erreur lors de la création du paiement');
@@ -122,7 +115,6 @@ export default function PricingPage() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   return (
