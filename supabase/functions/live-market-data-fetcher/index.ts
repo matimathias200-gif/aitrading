@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders } from './cors.ts';
 
 interface TechnicalIndicators {
   rsi: number;
@@ -91,7 +91,6 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Récupérer la watchlist active
     const { data: watchlist, error: watchlistError } = await supabase
       .from('crypto_watchlist')
       .select('symbol')
@@ -99,7 +98,6 @@ Deno.serve(async (req: Request) => {
 
     if (watchlistError) throw watchlistError;
 
-    // Fetch des données de marché avec fallback
     const symbols = watchlist?.map(w => w.symbol) || [];
     const marketResult = await fetchMarketDataWithFallback(symbols);
 
@@ -112,7 +110,6 @@ Deno.serve(async (req: Request) => {
 
     const relevantTickers = marketResult.data;
 
-    // Transformer et stocker les données de marché
     const marketData: CryptoData[] = relevantTickers.map((ticker: any) => ({
       symbol: ticker.symbol,
       price: parseFloat(ticker.lastPrice),
@@ -122,7 +119,6 @@ Deno.serve(async (req: Request) => {
       low24h: parseFloat(ticker.lowPrice),
     }));
 
-    // Mettre à jour la table crypto_market_data
     for (const data of marketData) {
       await supabase
         .from('crypto_market_data')
@@ -135,17 +131,26 @@ Deno.serve(async (req: Request) => {
         }, { onConflict: 'symbol' });
     }
 
-    // Générer les signaux de trading
+    for (const data of marketData) {
+      await supabase
+        .from('crypto_prices')
+        .upsert({
+          symbol: data.symbol,
+          price: data.price,
+          change_24h: data.change24h,
+          volume_24h: data.volume24h,
+          market_cap: 0,
+          last_updated: new Date().toISOString(),
+        }, { onConflict: 'symbol' });
+    }
+
     const signals: Signal[] = [];
 
     for (const crypto of marketData) {
-      // Fetch historical data avec fallback
       const klinesResult = await fetchKlinesWithFallback(crypto.symbol);
       if (!klinesResult.success || klinesResult.data.length < 50) continue;
 
       const klines = klinesResult.data;
-
-      // Calcul des indicateurs techniques
       const closePrices = klines.map((k: any) => parseFloat(k[4]));
       const volumes = klines.map((k: any) => parseFloat(k[5]));
       
@@ -157,7 +162,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Insérer les nouveaux signaux dans la DB
     if (signals.length > 0) {
       const { error: insertError } = await supabase
         .from('crypto_signals')
@@ -201,10 +205,6 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-// ============================================================================
-// FONCTIONS UTILITAIRES
-// ============================================================================
 
 function calculateIndicators(prices: number[], volumes: number[]): TechnicalIndicators {
   const rsi = calculateRSI(prices, 14);
@@ -263,7 +263,6 @@ function calculateMACD(prices: number[]): { macd: number; signal: number; histog
   const ema26 = calculateEMA(prices, 26);
   const macd = ema12 - ema26;
   
-  // Simplified signal line (normally would use EMA of MACD)
   const signal = macd * 0.9;
   const histogram = macd - signal;
 
@@ -279,26 +278,22 @@ function generateSignal(crypto: CryptoData, indicators: TechnicalIndicators): Si
   const reasons: string[] = [];
   let explain = '';
 
-  // Stratégie de trading basée sur les indicateurs
-  
-  // Conditions d'achat (BUY)
   if (
-    rsi < 35 && // RSI oversold
-    macd.histogram > 0 && // MACD bullish
-    currentPrice > ema20 && // Prix au-dessus EMA20
-    volume > 1.2 && // Volume élevé
-    priceChange > -2 // Pas de chute brutale
+    rsi < 35 &&
+    macd.histogram > 0 &&
+    currentPrice > ema20 &&
+    volume > 1.2 &&
+    priceChange > -2
   ) {
     signalType = 'BUY';
     confidence = 70;
     reasons.push('RSI en survente', 'MACD haussier', 'Volume fort');
     explain = `Signal d'achat détecté sur ${crypto.symbol.replace('USDT', '')}. Le RSI indique une survente (${rsi.toFixed(1)}), le MACD est haussier et le volume est ${(volume * 100).toFixed(0)}% au-dessus de la moyenne.`;
   }
-  // Conditions d'achat modérées
   else if (
     rsi < 45 &&
     currentPrice > ema20 &&
-    ema20 > ema50 && // Tendance haussière
+    ema20 > ema50 &&
     macd.histogram > 0
   ) {
     signalType = 'BUY';
@@ -306,10 +301,9 @@ function generateSignal(crypto: CryptoData, indicators: TechnicalIndicators): Si
     reasons.push('Tendance haussière', 'RSI favorable', 'MACD positif');
     explain = `Opportunité d'achat modérée sur ${crypto.symbol.replace('USDT', '')}. La tendance est haussière avec l'EMA20 au-dessus de l'EMA50.`;
   }
-  // Conditions de vente (SELL)
   else if (
-    rsi > 70 && // RSI overbought
-    macd.histogram < 0 && // MACD bearish
+    rsi > 70 &&
+    macd.histogram < 0 &&
     currentPrice < ema20 &&
     priceChange < 0
   ) {
@@ -318,7 +312,6 @@ function generateSignal(crypto: CryptoData, indicators: TechnicalIndicators): Si
     reasons.push('RSI en surachat', 'MACD baissier', 'Prix sous EMA20');
     explain = `Signal de vente sur ${crypto.symbol.replace('USDT', '')}. Le RSI indique un surachat (${rsi.toFixed(1)}), le MACD est baissier et le prix passe sous l'EMA20.`;
   }
-  // Signal fort de vente
   else if (
     rsi > 75 &&
     currentPrice < ema50 &&
@@ -333,14 +326,13 @@ function generateSignal(crypto: CryptoData, indicators: TechnicalIndicators): Si
 
   if (signalType === 'WAIT') return null;
 
-  // Calcul des niveaux de prix
   const takeProfit = signalType === 'BUY' 
-    ? currentPrice * 1.03 // +3% profit target
-    : currentPrice * 0.97; // -3% profit target
+    ? currentPrice * 1.03
+    : currentPrice * 0.97;
 
   const stopLoss = signalType === 'BUY'
-    ? currentPrice * 0.98 // -2% stop loss
-    : currentPrice * 1.02; // +2% stop loss
+    ? currentPrice * 0.98
+    : currentPrice * 1.02;
 
   return {
     symbol: crypto.symbol,
