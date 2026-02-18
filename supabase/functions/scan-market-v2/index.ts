@@ -140,7 +140,7 @@ async function scanAsset(coinId: string, symbol: string, tradingPair: string, su
 
     await supabase.from('function_logs').insert({
       function_name: 'scan-market-v2',
-      model_name: 'claude-3-5-haiku-20241022',
+      model_name: 'claude-3-haiku-20240307',
       success: true,
       latency_ms: Date.now() - start,
       metadata: { symbol: tradingPair, analysis }
@@ -233,7 +233,7 @@ Donne: tendance (bullish/bearish/neutral) + raison principale.`;
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 200,
         messages: [{ role: 'user', content: prompt }]
       })
