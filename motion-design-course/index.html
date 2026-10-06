@@ -1,297 +1,670 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Motion Claude — Formation Motion Design avec l'IA</title>
-  <meta name="description" content="Apprenez à créer des animations professionnelles avec Claude : After Effects, Remotion, GSAP, Lottie. De l'idée au rendu final, sans être développeur." />
-  <meta property="og:title" content="Motion Claude — Le motion design piloté par l'IA" />
-  <meta property="og:description" content="La formation pour créer des animations pros 10x plus vite avec Claude." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23d97757'/></svg>" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MotionClaude</title>
+<meta name="description" content="La formation pour créer du motion design pro avec Claude : After Effects, Remotion, GSAP, Lottie. De l'idée au rendu, sans savoir coder." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* Layout: timeline-inspired sales page — hero with live easing curve, then sections marked by timecodes, ending on a checkout sheet */
+:root {
+  --bg: #0e1030;
+  --bg-2: #15183f;
+  --surface: #1c2050;
+  --line: #2e3370;
+  --fg: #f3f1ff;
+  --muted: #a7a9d6;
+  --accent: #ff4f8b;
+  --accent-ink: #1a0614;
+  --cyan: #4fe0ff;
+  --gold: #ffd166;
+  --ok: #3ddc97;
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius: 16px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f5ff; --bg-2: #ecebfb; --surface: #ffffff; --line: #d9d8f0;
+    --fg: #14163a; --muted: #5a5c85; --accent: #e0306f; --accent-ink: #ffffff;
+    --cyan: #0a8fb3; --gold: #b07a00; --ok: #138a5a; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f5ff; --bg-2: #ecebfb; --surface: #ffffff; --line: #d9d8f0;
+  --fg: #14163a; --muted: #5a5c85; --accent: #e0306f; --accent-ink: #ffffff;
+  --cyan: #0a8fb3; --gold: #b07a00; --ok: #138a5a; color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+  overflow-x: hidden;
+}
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+h1 { font-size: clamp(2.1rem, 5.6vw, 4rem); font-weight: 800; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.5rem); font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 700; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+
+.wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding-inline: 20px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--font-mono); }
+.hl { color: var(--accent); }
+
+.tc { font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; color: var(--cyan); text-transform: uppercase; display: inline-flex; gap: 10px; align-items: center; }
+.tc::before { content: ""; width: 8px; height: 8px; background: var(--cyan); transform: rotate(45deg); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: 700 1rem var(--font-body); text-decoration: none; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); border: 2px solid var(--accent);
+  padding: 15px 26px; border-radius: 12px; transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px var(--accent); }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--fg); box-shadow: none; }
+.btn.block { width: 100%; }
+.btn.sm { padding: 9px 16px; font-size: .9rem; }
+
+/* Top bar */
+.promo { background: var(--accent); color: var(--accent-ink); text-align: center; font-weight: 700; font-size: .9rem; padding: 9px 16px; }
+.promo .mono { font-weight: 600; }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+.logo { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+.logo svg { flex: none; }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; font-size: .95rem; }
+.nav-links a:hover { color: var(--fg); }
+
+/* Hero */
+.hero { padding-block: 64px 72px; }
+.hero .wrap { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+.hero-copy { display: grid; gap: 22px; min-width: 0; }
+.hero-copy .lead { font-size: 1.15rem; color: var(--muted); max-width: 34em; }
+.hero-copy .lead b { color: var(--fg); }
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+.trust { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .9rem; color: var(--muted); }
+.trust span::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+
+/* Editor mock */
+.editor { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; box-shadow: 0 40px 80px -40px rgba(0,0,0,.6); }
+.editor-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: .75rem; color: var(--muted); }
+.editor-prompt { padding: 14px 16px; font-family: var(--font-mono); font-size: .85rem; min-height: 70px; border-bottom: 1px solid var(--line); }
+.editor-prompt .who { color: var(--accent); }
+.caret { color: var(--accent); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.stage { position: relative; height: 210px; overflow: hidden; }
+.stage .ball { position: absolute; left: 8%; bottom: 26px; width: 46px; height: 46px; border-radius: 50%; background: var(--accent); animation: travel 3s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate; }
+.stage .word { position: absolute; top: 34px; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: .18em; animation: word 3s cubic-bezier(.2,.8,.2,1) infinite alternate; }
+.stage .ground { position: absolute; left: 6%; right: 6%; bottom: 25px; height: 1px; background: var(--line); }
+@keyframes travel { to { left: calc(92% - 46px); transform: rotate(360deg); } }
+@keyframes word { 0% { opacity: 0; letter-spacing: .6em; } 60%, 100% { opacity: 1; letter-spacing: .18em; } }
+.curve { display: grid; grid-template-columns: 120px 1fr; border-top: 1px solid var(--line); }
+.curve svg { display: block; width: 100%; height: auto; }
+.curve-meta { padding: 12px 14px; font-family: var(--font-mono); font-size: .72rem; color: var(--muted); display: grid; gap: 4px; align-content: center; border-left: 1px solid var(--line); min-width: 0; }
+.curve-meta b { color: var(--fg); font-weight: 600; overflow-wrap: anywhere; }
+.timeline { position: relative; padding: 10px 14px 14px; display: grid; gap: 6px; border-top: 1px solid var(--line); }
+.track { position: relative; height: 8px; border-radius: 4px; background: var(--surface); }
+.kf { position: absolute; top: 50%; width: 9px; height: 9px; background: var(--gold); transform: translate(-50%,-50%) rotate(45deg); }
+.playhead { position: absolute; top: 4px; bottom: 8px; left: 14px; width: 2px; background: var(--accent); animation: play 3s linear infinite alternate; }
+@keyframes play { to { left: calc(100% - 14px); } }
+
+/* Tools strip */
+.tools { border-block: 1px solid var(--line); padding-block: 22px; overflow: hidden; }
+.tools-track { display: flex; gap: 48px; width: max-content; animation: scroll 32s linear infinite; }
+.tools-track span { font-family: var(--font-display); font-weight: 700; color: var(--muted); white-space: nowrap; font-size: 1.05rem; }
+@keyframes scroll { to { transform: translateX(-50%); } }
+
+/* Sections */
+section.block { padding-block: 88px; }
+section.alt { background: var(--bg-2); }
+.head { display: grid; gap: 14px; max-width: 720px; margin-bottom: 44px; }
+.head p { color: var(--muted); font-size: 1.05rem; }
+
+/* Before / after */
+.ba { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.ba > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.ba .after { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.ba ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ba .before li { color: var(--muted); }
+.ba .before li::before { content: "✕  "; color: var(--muted); }
+.ba .after li::before { content: "✓  "; color: var(--ok); font-weight: 700; }
+.ba .label { font-family: var(--font-mono); font-size: .8rem; }
+
+/* Curriculum */
+.mods { display: grid; gap: 10px; }
+.mod { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.mod summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; padding: 18px 20px; font-weight: 700; }
+.mod summary::-webkit-details-marker { display: none; }
+.mod .t { font-family: var(--font-mono); font-size: .78rem; color: var(--cyan); font-weight: 400; }
+.mod .d { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); font-weight: 400; }
+.mod p { padding: 0 20px 18px; color: var(--muted); }
+.mod[open] { border-color: var(--accent); }
+
+/* Projects */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.proj { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.proj p { color: var(--muted); font-size: .95rem; }
+.vis { height: 130px; border-radius: 10px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden; }
+.v1 i { width: 54px; height: 54px; border: 4px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin 1.4s cubic-bezier(.6,0,.4,1) infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.v2 i { width: 12px; height: 48px; border-radius: 3px; background: var(--cyan); animation: eq .9s ease-in-out infinite alternate; }
+.v2 i:nth-child(2) { animation-delay: .15s; background: var(--accent); } .v2 i:nth-child(3) { animation-delay: .3s; background: var(--gold); }
+@keyframes eq { to { transform: scaleY(.3); } }
+.v3 i { width: 38px; height: 38px; background: var(--gold); border-radius: 8px; animation: slide 1.8s cubic-bezier(.7,0,.3,1) infinite alternate; }
+@keyframes slide { from { transform: translateX(-70px); } to { transform: translateX(70px) rotate(180deg); border-radius: 50%; } }
+.v4 i { width: 44px; height: 78px; border: 2px solid var(--accent); border-radius: 9px; animation: bob 2s ease-in-out infinite; }
+.v4 i:nth-child(2) { animation-delay: -1s; border-color: var(--cyan); }
+@keyframes bob { 50% { transform: translateY(-12px); } }
+.v5 i { width: 86px; height: 34px; border-radius: 999px; background: var(--accent); animation: press 1.4s ease-in-out infinite; }
+@keyframes press { 40% { transform: scale(.88); } 60% { transform: scale(1.06); } }
+.v6 { align-items: flex-end; padding-bottom: 20px; }
+.v6 i { width: 20px; background: var(--cyan); border-radius: 3px 3px 0 0; animation: grow 2.4s cubic-bezier(.7,0,.3,1) infinite; }
+.v6 i:nth-child(1) { --h: 36px; } .v6 i:nth-child(2) { --h: 66px; background: var(--accent); animation-delay: .1s; }
+.v6 i:nth-child(3) { --h: 50px; background: var(--gold); animation-delay: .2s; } .v6 i:nth-child(4) { --h: 86px; animation-delay: .3s; }
+@keyframes grow { 0% { height: 6px; } 40%, 80% { height: var(--h); } 100% { height: 6px; } }
+
+/* Value stack */
+.stack { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.stack-row { display: flex; justify-content: space-between; gap: 16px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
+.stack-row span:last-child { font-family: var(--font-mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stack-total { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; padding: 20px 22px; background: var(--bg-2); }
+.stack-total s { color: var(--muted); font-family: var(--font-mono); }
+.stack-total strong { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); }
+
+/* For who */
+.who { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.who div { border-top: 3px solid var(--accent); padding-top: 14px; display: grid; gap: 6px; min-width: 0; }
+.who div:nth-child(2) { border-color: var(--cyan); } .who div:nth-child(3) { border-color: var(--gold); } .who div:nth-child(4) { border-color: var(--ok); }
+.who p { color: var(--muted); font-size: .95rem; }
+
+/* Pricing */
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: stretch; }
+.plan { position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 28px 24px; display: grid; gap: 18px; grid-template-rows: auto auto 1fr auto; }
+.plan.best { border: 2px solid var(--accent); box-shadow: 0 30px 70px -40px var(--accent); }
+.ribbon { position: absolute; top: -13px; left: 24px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .75rem; padding: 4px 12px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; }
+.price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.price .amt { font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; font-variant-numeric: tabular-nums; }
+.price s { color: var(--muted); font-family: var(--font-mono); }
+.price small { width: 100%; color: var(--muted); font-size: .88rem; }
+.plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; align-content: start; }
+.plan li::before { content: "✓  "; color: var(--ok); font-weight: 700; }
+
+.paybar { margin-top: 28px; display: grid; gap: 12px; justify-items: center; text-align: center; }
+.logos { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.pm { display: inline-flex; align-items: center; justify-content: center; height: 30px; min-width: 52px; padding: 0 10px; border-radius: 6px; background: #ffffff; color: #1a1a1a; font: 800 .78rem var(--font-body); border: 1px solid var(--line); }
+.pm.visa { color: #1a1f71; font-style: italic; letter-spacing: .02em; }
+.pm.pp { color: #003087; } .pm.pp b { color: #009cde; }
+.pm.cb { background: #1c5c9a; color: #fff; }
+.pm.ap, .pm.gp { background: #000; color: #fff; }
+.pm.mc { gap: 0; } .pm.mc i { width: 16px; height: 16px; border-radius: 50%; background: #eb001b; } .pm.mc i + i { background: #f79e1b; margin-left: -6px; mix-blend-mode: multiply; }
+.secure { font-size: .88rem; color: var(--muted); }
+
+.guarantee { margin-top: 44px; display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; border: 1px dashed var(--ok); border-radius: var(--radius); padding: 24px; }
+.seal { width: 86px; height: 86px; border-radius: 50%; border: 3px solid var(--ok); display: grid; place-items: center; text-align: center; font-family: var(--font-display); font-weight: 800; color: var(--ok); font-size: .8rem; line-height: 1.1; }
+.seal b { font-size: 1.6rem; display: block; }
+.guarantee p { color: var(--muted); }
+
+/* FAQ */
+.faq { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 20px; padding: 20px 0; font-weight: 700; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--accent); font-size: 1.4rem; line-height: 1; transition: transform .2s; }
+.faq[open] summary::after { transform: rotate(45deg); }
+.faq p { color: var(--muted); padding-bottom: 20px; max-width: 62ch; }
+
+.final { text-align: center; padding-block: 96px; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%); }
+.final .wrap { display: grid; gap: 20px; justify-items: center; }
+
+footer { border-top: 1px solid var(--line); padding-block: 28px 100px; font-size: .88rem; color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+
+/* Sticky mobile CTA */
+.sticky-cta { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: 1px solid var(--line); align-items: center; gap: 12px; }
+.sticky-cta .p { font-family: var(--font-display); font-weight: 800; white-space: nowrap; }
+.sticky-cta .p s { font-family: var(--font-mono); font-weight: 400; color: var(--muted); font-size: .8rem; margin-right: 6px; }
+.sticky-cta .btn { flex: 1; padding: 13px 16px; }
+
+/* Checkout sheet */
+.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(5,6,20,.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.sheet { width: 100%; max-width: 480px; max-height: 100%; overflow-y: auto; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; display: grid; gap: 18px; }
+.sheet-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.x { background: none; border: 1px solid var(--line); color: var(--fg); width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; flex: none; }
+.summary { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--bg-2); font-weight: 700; }
+.summary span:last-child { font-family: var(--font-mono); }
+.field-label { font-size: .8rem; font-family: var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.methods { display: grid; gap: 10px; }
+.method { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px; border: 2px solid var(--line); border-radius: 12px; cursor: pointer; }
+.method:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.method input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
+.method small { display: block; color: var(--muted); font-size: .82rem; }
+.method .logos { justify-content: flex-end; gap: 4px; }
+.method .pm { height: 22px; min-width: 34px; font-size: .62rem; padding: 0 5px; }
+.method .pm.mc i { width: 11px; height: 11px; }
+.notice { font-size: .9rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--gold); color: var(--fg); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+.fine { font-size: .8rem; color: var(--muted); text-align: center; }
+
+@media (max-width: 960px) {
+  .hero .wrap, .ba { grid-template-columns: 1fr; }
+  .grid3, .plans { grid-template-columns: 1fr; }
+  .who { grid-template-columns: 1fr 1fr; }
+  .plan.best { order: -1; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .wrap { padding-inline: 16px; }
+  .nav-links { display: none; }
+  .hero { padding-block: 40px 56px; }
+  section.block { padding-block: 64px; }
+  .who { grid-template-columns: 1fr; }
+  .sticky-cta { display: flex; }
+  .guarantee { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .curve { grid-template-columns: 90px 1fr; }
+  .mod summary { grid-template-columns: auto 1fr; }
+  .mod .d { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <header class="nav">
-    <div class="container nav-inner">
-      <a href="#" class="logo"><span class="logo-dot"></span>Motion<strong>Claude</strong></a>
-      <nav class="nav-links">
-        <a href="#programme">Programme</a>
-        <a href="#resultats">Projets</a>
-        <a href="#tarifs">Tarifs</a>
-        <a href="#faq">FAQ</a>
-      </nav>
-      <a href="#tarifs" class="btn btn-sm">Rejoindre</a>
-    </div>
-  </header>
+<div class="promo">Offre de lancement : <b>-100 €</b> sur la formule Pro · fin dans <span class="mono" id="cd-top">—</span></div>
 
-  <!-- HERO -->
+<header class="nav">
+  <div class="wrap">
+    <a href="#top" class="logo" aria-label="MotionClaude, accueil">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M3 24 C 10 24, 10 4, 25 4" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="4" r="3" fill="var(--cyan)"/></svg>
+      MotionClaude
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#programme">Programme</a>
+      <a href="#projets">Projets</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="btn sm" data-buy="pro">Acheter</button>
+  </div>
+</header>
+
+<main id="top">
   <section class="hero">
-    <div class="hero-bg" aria-hidden="true">
-      <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
-    </div>
-    <div class="container hero-grid">
-      <div class="hero-copy reveal">
-        <span class="badge">● Nouvelle session — places limitées</span>
-        <h1>Crée du <span class="grad">motion design</span> pro avec Claude.</h1>
-        <p class="lead">
-          Décris ton animation en français, Claude écrit le code, les expressions After Effects
-          et les scripts. Tu passes de l'idée à la vidéo finale <strong>10x plus vite</strong> —
-          même si tu n'as jamais codé.
-        </p>
+    <div class="wrap">
+      <div class="hero-copy">
+        <span class="tc">Formation vidéo · accès immédiat</span>
+        <h1>Tu décris l'animation.<br><span class="hl">Claude</span> l'anime.</h1>
+        <p class="lead">Apprends à créer du <b>motion design professionnel</b> en pilotant Claude : expressions After Effects, vidéos Remotion, animations web GSAP et Lottie. <b>Sans savoir coder</b>, et jusqu'à 10 fois plus vite.</p>
         <div class="hero-ctas">
-          <a href="#tarifs" class="btn btn-lg">Je veux la formation →</a>
-          <a href="#programme" class="btn btn-ghost btn-lg">Voir le programme</a>
+          <button class="btn" data-buy="pro">Je commence maintenant · 197 €</button>
+          <a href="#programme" class="btn ghost">Voir le programme</a>
         </div>
-        <ul class="hero-proof">
-          <li><strong>8</strong> modules</li>
-          <li><strong>40+</strong> leçons vidéo</li>
-          <li><strong>150+</strong> prompts prêts à l'emploi</li>
-        </ul>
-      </div>
-
-      <!-- Animated demo: prompt -> animation -->
-      <div class="demo reveal" aria-label="Démonstration : un prompt devient une animation">
-        <div class="demo-window">
-          <div class="demo-bar"><i></i><i></i><i></i><span>claude — motion</span></div>
-          <div class="demo-prompt">
-            <span class="you">Toi&nbsp;›</span>
-            <span id="typed"></span><span class="caret">|</span>
-          </div>
-          <div class="demo-stage">
-            <div class="shape s-circle"></div>
-            <div class="shape s-square"></div>
-            <div class="shape s-tri"></div>
-            <div class="stage-title">LAUNCH</div>
-          </div>
-          <div class="demo-timeline">
-            <div class="track"><span class="kf" style="left:5%"></span><span class="kf" style="left:40%"></span><span class="kf" style="left:80%"></span></div>
-            <div class="track"><span class="kf" style="left:15%"></span><span class="kf" style="left:55%"></span></div>
-            <div class="playhead"></div>
-          </div>
+        <div class="trust">
+          <span>Satisfait ou remboursé 14 jours</span>
+          <span>Paiement en 3× sans frais</span>
+          <span>Accès à vie</span>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- LOGOS / TOOLS -->
-  <section class="tools">
-    <div class="container">
-      <p class="muted center">Les outils que tu vas maîtriser avec Claude</p>
-      <div class="marquee">
-        <div class="marquee-track">
-          <span>After Effects</span><span>Remotion</span><span>GSAP</span><span>Lottie</span><span>Rive</span><span>CSS / SVG</span><span>Three.js</span><span>Blender (Python)</span><span>Premiere Pro</span>
-          <span>After Effects</span><span>Remotion</span><span>GSAP</span><span>Lottie</span><span>Rive</span><span>CSS / SVG</span><span>Three.js</span><span>Blender (Python)</span><span>Premiere Pro</span>
+      <div class="editor" aria-label="Exemple : un prompt devient une animation">
+        <div class="editor-top"><span>logo_bounce.comp</span><span>1920×1080 · 60 fps</span></div>
+        <div class="editor-prompt"><span class="who">Toi ›</span> <span id="typed">Fais rebondir le logo avec un easing élastique</span><span class="caret">▍</span></div>
+        <div class="stage">
+          <div class="word">LAUNCH</div>
+          <div class="ground"></div>
+          <div class="ball"></div>
+        </div>
+        <div class="curve">
+          <svg viewBox="0 0 120 90" aria-hidden="true">
+            <line x1="10" y1="80" x2="110" y2="80" stroke="var(--line)" />
+            <line x1="10" y1="10" x2="10" y2="80" stroke="var(--line)" />
+            <path d="M10 80 C 33 130, 37 -40, 110 10" fill="none" stroke="var(--accent)" stroke-width="2.5" />
+            <circle cx="10" cy="80" r="3.5" fill="var(--gold)" /><circle cx="110" cy="10" r="3.5" fill="var(--gold)" />
+          </svg>
+          <div class="curve-meta"><span>easing</span><b>cubic-bezier(.68,-.55,.27,1.55)</b><span>00:00:03:00 · back in-out</span></div>
+        </div>
+        <div class="timeline">
+          <div class="track"><span class="kf" style="left:3%"></span><span class="kf" style="left:50%"></span><span class="kf" style="left:97%"></span></div>
+          <div class="track"><span class="kf" style="left:20%"></span><span class="kf" style="left:70%"></span></div>
+          <div class="playhead"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- PROBLEM / SOLUTION -->
-  <section class="section">
-    <div class="container two-col">
-      <div class="reveal">
-        <h2>Le motion design, c'est long. <span class="muted">Trop long.</span></h2>
-        <ul class="pain">
-          <li>✕ Des heures à caler des keyframes à la main</li>
-          <li>✕ Des expressions After Effects incompréhensibles</li>
-          <li>✕ Des tutos de 3h pour un seul effet</li>
-          <li>✕ Des clients qui veulent 10 variantes « pour hier »</li>
-        </ul>
+  <div class="tools" aria-label="Outils enseignés">
+    <div class="tools-track">
+      <span>After Effects</span><span>Remotion</span><span>GSAP</span><span>Lottie</span><span>Rive</span><span>CSS & SVG</span><span>Three.js</span><span>Blender Python</span><span>Premiere Pro</span>
+      <span aria-hidden="true">After Effects</span><span aria-hidden="true">Remotion</span><span aria-hidden="true">GSAP</span><span aria-hidden="true">Lottie</span><span aria-hidden="true">Rive</span><span aria-hidden="true">CSS & SVG</span><span aria-hidden="true">Three.js</span><span aria-hidden="true">Blender Python</span><span aria-hidden="true">Premiere Pro</span>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="head">
+        <span class="tc">Le problème</span>
+        <h2>Une animation de 10 secondes ne devrait pas prendre ta journée.</h2>
       </div>
-      <div class="reveal card card-accent">
-        <h3>Avec Claude comme assistant :</h3>
-        <ul class="gain">
-          <li>✓ Tu décris, Claude génère expressions, scripts et code d'animation</li>
-          <li>✓ Tu automatises les tâches répétitives (textes, formats, variantes)</li>
-          <li>✓ Tu produis des animations vidéo en code avec Remotion</li>
-          <li>✓ Tu livres plus, mieux, et tu factures plus cher</li>
-        </ul>
+      <div class="ba">
+        <div class="before">
+          <span class="label muted">SANS CLAUDE</span>
+          <ul>
+            <li>Des heures à placer des keyframes à la main</li>
+            <li>Des expressions After Effects que tu copies sans les comprendre</li>
+            <li>Des tutos de 3 heures pour un seul effet</li>
+            <li>Des clients qui veulent 10 formats « pour hier »</li>
+          </ul>
+        </div>
+        <div class="after">
+          <span class="label hl">AVEC LA MÉTHODE MOTIONCLAUDE</span>
+          <ul>
+            <li>Tu écris ce que tu veux, Claude génère les expressions et le code</li>
+            <li>Tu automatises les textes, les formats et les variantes</li>
+            <li>Tu exportes des vidéos MP4 depuis du code avec Remotion</li>
+            <li>Tu livres plus vite et tu factures plus cher</li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- PROGRAMME -->
-  <section class="section alt" id="programme">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Programme</span>
-        <h2>8 modules, de zéro à freelance</h2>
-        <p class="muted">Chaque module contient des vidéos, les fichiers projets et la bibliothèque de prompts associée.</p>
+  <section class="block alt" id="programme">
+    <div class="wrap">
+      <div class="head">
+        <span class="tc">Programme · 8 modules · 10 h de vidéo</span>
+        <h2>De ta première animation à tes premiers clients</h2>
+        <p>Chaque module contient les vidéos, les fichiers projets à télécharger et les prompts utilisés à l'écran.</p>
       </div>
-      <div class="modules">
-        <details class="module reveal" open>
-          <summary><span class="num">01</span> Les fondamentaux du motion design <span class="dur">45 min</span></summary>
-          <p>Timing, easing, principes d'animation, rythme et storytelling visuel. Les bases qui rendent une animation « pro ».</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">02</span> Bien parler à Claude : le prompting créatif <span class="dur">1 h</span></summary>
-          <p>Structurer une demande d'animation, donner des références, itérer sur un résultat, construire ton propre « brief » réutilisable.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">03</span> After Effects + Claude : expressions & scripts <span class="dur">1 h 30</span></summary>
-          <p>Générer des expressions (wiggle, rebonds, inertie, liens), écrire des scripts ExtendScript pour automatiser ta composition.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">04</span> Animer en code avec Remotion <span class="dur">2 h</span></summary>
-          <p>Créer des vidéos en React sans être développeur : Claude écrit, tu ajustes, tu exportes en MP4. Idéal pour les vidéos à la chaîne.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">05</span> Motion web : CSS, SVG & GSAP <span class="dur">1 h 15</span></summary>
-          <p>Animations de sites, landing pages, micro-interactions et logos animés en SVG — prêts à intégrer.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">06</span> Lottie & Rive pour les apps <span class="dur">1 h</span></summary>
-          <p>Produire des animations légères pour mobile et web, et laisser Claude préparer et corriger les fichiers.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">07</span> Workflow pro : storyboard → rendu <span class="dur">1 h 30</span></summary>
-          <p>Claude comme directeur artistique : scripts, storyboards, déclinaisons de formats (9:16, 1:1, 16:9) et sous-titres automatiques.</p>
-        </details>
-        <details class="module reveal">
-          <summary><span class="num">08</span> Vendre ses animations <span class="dur">1 h</span></summary>
-          <p>Portfolio, offres, prix, prospection et devis — rédigés et optimisés avec Claude pour décrocher tes premiers clients.</p>
-        </details>
+      <div class="mods">
+        <details class="mod" open><summary><span class="t">M1</span>Les bases du motion design<span class="d">00:45:00</span></summary><p>Timing, easing, anticipation, rythme. Les principes qui font qu'une animation paraît professionnelle.</p></details>
+        <details class="mod"><summary><span class="t">M2</span>Parler à Claude comme à un animateur<span class="d">01:00:00</span></summary><p>Rédiger un brief d'animation, donner des références, corriger un résultat en deux messages. Tu repars avec ton modèle de brief.</p></details>
+        <details class="mod"><summary><span class="t">M3</span>After Effects : expressions et scripts<span class="d">01:30:00</span></summary><p>Rebonds, inertie, wiggle contrôlé, liens entre calques. Puis des scripts ExtendScript qui montent une composition à ta place.</p></details>
+        <details class="mod"><summary><span class="t">M4</span>Des vidéos en code avec Remotion<span class="d">02:00:00</span></summary><p>Claude écrit, tu ajustes, tu exportes en MP4. Idéal pour produire des dizaines de vidéos à partir d'un tableau.</p></details>
+        <details class="mod"><summary><span class="t">M5</span>Animation web : CSS, SVG et GSAP<span class="d">01:15:00</span></summary><p>Logos animés, micro-interactions, landing pages qui bougent. Le code est prêt à coller dans un site.</p></details>
+        <details class="mod"><summary><span class="t">M6</span>Lottie et Rive pour les apps<span class="d">01:00:00</span></summary><p>Des animations légères pour mobile, que Claude t'aide à préparer, nettoyer et corriger.</p></details>
+        <details class="mod"><summary><span class="t">M7</span>Du storyboard au rendu final<span class="d">01:30:00</span></summary><p>Script, storyboard, déclinaisons 9:16, 1:1 et 16:9, sous-titres automatiques. Le workflow complet d'un projet client.</p></details>
+        <details class="mod"><summary><span class="t">M8</span>Vendre tes animations<span class="d">01:00:00</span></summary><p>Portfolio, offres, prix, messages de prospection et devis, rédigés avec Claude pour signer tes premiers clients.</p></details>
       </div>
     </div>
   </section>
 
-  <!-- PROJECTS -->
-  <section class="section" id="resultats">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Ce que tu vas créer</span>
-        <h2>6 projets concrets pour ton portfolio</h2>
+  <section class="block" id="projets">
+    <div class="wrap">
+      <div class="head">
+        <span class="tc">Ce que tu vas créer</span>
+        <h2>6 projets pour remplir ton portfolio</h2>
       </div>
-      <div class="grid-3">
-        <article class="project reveal"><div class="p-vis v1"><span></span></div><h3>Logo animé</h3><p>Un reveal de logo en SVG + GSAP, exportable en vidéo.</p></article>
-        <article class="project reveal"><div class="p-vis v2"><span></span><span></span><span></span></div><h3>Kinetic typography</h3><p>Une vidéo de texte rythmée sur une musique, générée avec Remotion.</p></article>
-        <article class="project reveal"><div class="p-vis v3"><span></span></div><h3>Explainer vidéo</h3><p>Une vidéo explicative de 60 secondes, du script au rendu.</p></article>
-        <article class="project reveal"><div class="p-vis v4"><span></span><span></span></div><h3>Pack réseaux sociaux</h3><p>10 templates Reels/TikTok déclinés automatiquement.</p></article>
-        <article class="project reveal"><div class="p-vis v5"><span></span></div><h3>Micro-interactions UI</h3><p>Boutons, loaders et transitions Lottie pour une app.</p></article>
-        <article class="project reveal"><div class="p-vis v6"><span></span><span></span><span></span><span></span></div><h3>Data viz animée</h3><p>Des graphiques qui s'animent à partir d'un simple tableau.</p></article>
-      </div>
-    </div>
-  </section>
-
-  <!-- BONUS -->
-  <section class="section alt">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Inclus</span>
-        <h2>Tout ce qu'il te faut pour démarrer</h2>
-      </div>
-      <div class="grid-4">
-        <div class="feature reveal"><div class="ico">⚡</div><h4>150+ prompts</h4><p>Bibliothèque de prompts testés, classés par outil et par effet.</p></div>
-        <div class="feature reveal"><div class="ico">📁</div><h4>Fichiers projets</h4><p>Tous les fichiers sources des leçons, prêts à modifier.</p></div>
-        <div class="feature reveal"><div class="ico">💬</div><h4>Communauté</h4><p>Un espace privé pour poser tes questions et partager tes créations.</p></div>
-        <div class="feature reveal"><div class="ico">♾️</div><h4>Accès à vie</h4><p>Toutes les mises à jour futures incluses, sans surcoût.</p></div>
+      <div class="grid3">
+        <article class="proj"><div class="vis v1"><i></i></div><h3>Logo animé</h3><p>Un reveal de logo en SVG et GSAP, exportable en vidéo.</p></article>
+        <article class="proj"><div class="vis v2"><i></i><i></i><i></i></div><h3>Kinetic typography</h3><p>Un texte animé au rythme d'une musique, rendu avec Remotion.</p></article>
+        <article class="proj"><div class="vis v3"><i></i></div><h3>Vidéo explicative</h3><p>60 secondes, du script écrit avec Claude jusqu'à l'export.</p></article>
+        <article class="proj"><div class="vis v4"><i></i><i></i></div><h3>Pack réseaux sociaux</h3><p>10 templates Reels et TikTok déclinés automatiquement.</p></article>
+        <article class="proj"><div class="vis v5"><i></i></div><h3>Micro-interactions</h3><p>Boutons, loaders et transitions Lottie pour une application.</p></article>
+        <article class="proj"><div class="vis v6"><i></i><i></i><i></i><i></i></div><h3>Graphiques animés</h3><p>Des données qui s'animent à partir d'un simple tableur.</p></article>
       </div>
     </div>
   </section>
 
-  <!-- TESTIMONIALS (à remplacer par de vrais avis) -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Avis</span>
-        <h2>Ils ont suivi la formation</h2>
-        <p class="muted small">⚠️ Exemples à remplacer par de vrais témoignages d'élèves avant la mise en ligne.</p>
+  <section class="block alt">
+    <div class="wrap">
+      <div class="head">
+        <span class="tc">Pour qui</span>
+        <h2>Tu n'as pas besoin d'être développeur</h2>
       </div>
-      <div class="grid-3">
-        <blockquote class="quote reveal">« [Témoignage élève #1 — résultat concret obtenu grâce à la formation] »<cite>Prénom N. — Métier</cite></blockquote>
-        <blockquote class="quote reveal">« [Témoignage élève #2 — gain de temps, nouveau client, etc.] »<cite>Prénom N. — Métier</cite></blockquote>
-        <blockquote class="quote reveal">« [Témoignage élève #3 — avant / après la formation] »<cite>Prénom N. — Métier</cite></blockquote>
+      <div class="who">
+        <div><h3>Débutants</h3><p>Tu pars de zéro. Le module 1 pose toutes les bases avant de toucher à l'IA.</p></div>
+        <div><h3>Monteurs vidéo</h3><p>Tu ajoutes des animations à tes montages sans passer des soirées sur After Effects.</p></div>
+        <div><h3>Motion designers</h3><p>Tu gagnes des heures sur chaque projet et tu proposes des offres en volume.</p></div>
+        <div><h3>Créateurs et marques</h3><p>Tu produis tes propres contenus animés au lieu de les sous-traiter.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- PRICING -->
-  <section class="section alt" id="tarifs">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Tarifs</span>
-        <h2>Choisis ta formule</h2>
-        <p class="muted">Paiement sécurisé · Satisfait ou remboursé 14 jours</p>
+  <section class="block" id="tarifs">
+    <div class="wrap">
+      <div class="head">
+        <span class="tc">Tarifs</span>
+        <h2>Tout ce que tu reçois</h2>
       </div>
-      <div class="pricing">
-        <div class="price-card reveal">
+      <div class="stack" style="margin-bottom:56px">
+        <div class="stack-row"><span>8 modules vidéo (10 h)</span><span>197 €</span></div>
+        <div class="stack-row"><span>Bibliothèque de 150+ prompts classés par outil</span><span>67 €</span></div>
+        <div class="stack-row"><span>Fichiers projets After Effects et Remotion</span><span>47 €</span></div>
+        <div class="stack-row"><span>Templates réseaux sociaux prêts à décliner</span><span>37 €</span></div>
+        <div class="stack-row"><span>Communauté privée d'entraide</span><span>47 €</span></div>
+        <div class="stack-total"><span>Valeur totale <s>395 €</s></span><span>Aujourd'hui <strong>197 €</strong></span></div>
+      </div>
+
+      <div class="head"><h2>Choisis ta formule</h2></div>
+      <div class="plans">
+        <div class="plan">
           <h3>Essentiel</h3>
-          <div class="price"><span class="amount">97€</span><span class="muted">paiement unique</span></div>
+          <div class="price"><span class="amt">97 €</span><small>paiement unique</small></div>
           <ul>
-            <li>✓ Les 8 modules vidéo</li>
-            <li>✓ 150+ prompts</li>
-            <li>✓ Fichiers projets</li>
-            <li>✓ Accès à vie</li>
+            <li>Les 8 modules vidéo</li>
+            <li>150+ prompts</li>
+            <li>Fichiers projets</li>
+            <li>Accès à vie</li>
           </ul>
-          <a href="#" class="btn btn-ghost btn-block" data-checkout="essentiel">Choisir Essentiel</a>
+          <button class="btn ghost block" data-buy="essentiel">Choisir Essentiel</button>
         </div>
-        <div class="price-card featured reveal">
-          <span class="ribbon">Le plus populaire</span>
+        <div class="plan best">
+          <span class="ribbon">Le plus choisi</span>
           <h3>Pro</h3>
-          <div class="price"><span class="old">297€</span><span class="amount">197€</span><span class="muted">ou 3 × 69€</span></div>
+          <div class="price"><s>297 €</s><span class="amt">197 €</span><small>ou 3 × 65,67 € sans frais</small></div>
           <ul>
-            <li>✓ Tout Essentiel</li>
-            <li>✓ Communauté privée</li>
-            <li>✓ Templates Remotion & AE premium</li>
-            <li>✓ Module bonus : vendre ses animations</li>
-            <li>✓ Certificat de fin de formation</li>
+            <li>Tout Essentiel</li>
+            <li>Templates réseaux sociaux</li>
+            <li>Communauté privée</li>
+            <li>Module bonus : vendre ses animations</li>
+            <li>Certificat de fin de formation</li>
           </ul>
-          <a href="#" class="btn btn-block" data-checkout="pro">Je rejoins la formation Pro →</a>
-          <p class="countdown small">Offre de lancement : <span id="countdown">--</span></p>
+          <button class="btn block" data-buy="pro">Je prends la formule Pro</button>
         </div>
-        <div class="price-card reveal">
+        <div class="plan">
           <h3>Coaching</h3>
-          <div class="price"><span class="amount">497€</span><span class="muted">paiement unique</span></div>
+          <div class="price"><span class="amt">497 €</span><small>ou 3 × 165,67 € sans frais</small></div>
           <ul>
-            <li>✓ Tout Pro</li>
-            <li>✓ 3 sessions de coaching 1:1</li>
-            <li>✓ Revue de ton portfolio</li>
-            <li>✓ Support prioritaire</li>
+            <li>Tout Pro</li>
+            <li>3 sessions de coaching individuel</li>
+            <li>Revue de ton portfolio</li>
+            <li>Support prioritaire</li>
           </ul>
-          <a href="#" class="btn btn-ghost btn-block" data-checkout="coaching">Choisir Coaching</a>
+          <button class="btn ghost block" data-buy="coaching">Choisir Coaching</button>
+        </div>
+      </div>
+
+      <div class="paybar">
+        <div class="logos" aria-label="Moyens de paiement acceptés">
+          <span class="pm cb">CB</span><span class="pm visa">VISA</span><span class="pm mc" aria-label="Mastercard"><i></i><i></i></span>
+          <span class="pm ap"> Pay</span><span class="pm gp">G Pay</span><span class="pm pp"><b>Pay</b>Pal</span>
+        </div>
+        <p class="secure">🔒 Paiement 100 % sécurisé · Carte bancaire, Apple Pay, Google Pay, PayPal · 3× sans frais</p>
+      </div>
+
+      <div class="guarantee">
+        <div class="seal"><span><b>14</b>JOURS</span></div>
+        <div>
+          <h3>Satisfait ou remboursé, sans condition</h3>
+          <p>Suis la formation pendant 14 jours. Si elle ne te convient pas, envoie un e-mail et tu es remboursé intégralement. Aucune justification demandée.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section class="section" id="faq">
-    <div class="container narrow">
-      <div class="section-head reveal">
-        <span class="eyebrow">FAQ</span>
-        <h2>Questions fréquentes</h2>
-      </div>
-      <details class="faq reveal"><summary>Faut-il savoir coder ?</summary><p>Non. Claude écrit le code et les scripts à ta place. Tu apprends à le guider, à lire le résultat et à l'ajuster.</p></details>
-      <details class="faq reveal"><summary>Faut-il un abonnement Claude payant ?</summary><p>La version gratuite de Claude suffit pour démarrer. Un abonnement payant est recommandé pour un usage intensif, mais pas obligatoire.</p></details>
-      <details class="faq reveal"><summary>Je suis débutant en motion design, c'est pour moi ?</summary><p>Oui. Le module 1 pose toutes les bases. Les motion designers confirmés gagneront surtout en vitesse grâce aux modules 3 à 7.</p></details>
-      <details class="faq reveal"><summary>Ai-je besoin d'After Effects ?</summary><p>Non, seulement pour le module 3. Remotion, GSAP, CSS/SVG et Lottie sont gratuits.</p></details>
-      <details class="faq reveal"><summary>Combien de temps ai-je accès ?</summary><p>À vie, mises à jour incluses.</p></details>
-      <details class="faq reveal"><summary>Et si la formation ne me plaît pas ?</summary><p>Tu as 14 jours pour demander un remboursement intégral, sans justification.</p></details>
+  <section class="block alt" id="faq">
+    <div class="wrap">
+      <div class="head"><span class="tc">FAQ</span><h2>Questions fréquentes</h2></div>
+      <details class="faq"><summary>Faut-il savoir coder ?</summary><p>Non. Claude écrit le code et les scripts. Tu apprends à le guider, à vérifier le résultat et à l'ajuster.</p></details>
+      <details class="faq"><summary>Faut-il un abonnement Claude payant ?</summary><p>La version gratuite suffit pour suivre la formation. Un abonnement payant est utile si tu produis beaucoup, mais il n'est pas obligatoire.</p></details>
+      <details class="faq"><summary>Ai-je besoin d'After Effects ?</summary><p>Seulement pour le module 3. Remotion, GSAP, CSS, SVG et Lottie sont gratuits.</p></details>
+      <details class="faq"><summary>Comment fonctionne le paiement en 3 fois ?</summary><p>Choisis « 3× sans frais » au moment du paiement. Le premier tiers est prélevé aujourd'hui, les deux autres à 30 et 60 jours. Tu as accès à toute la formation dès le premier paiement.</p></details>
+      <details class="faq"><summary>Quand ai-je accès à la formation ?</summary><p>Immédiatement après le paiement. Tu reçois tes accès par e-mail dans la minute.</p></details>
+      <details class="faq"><summary>Et si la formation ne me plaît pas ?</summary><p>Tu as 14 jours pour demander un remboursement intégral, sans justification.</p></details>
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="final-cta">
-    <div class="container center reveal">
+  <section class="final">
+    <div class="wrap">
       <h2>Ta prochaine animation peut prendre 10 minutes.</h2>
-      <p class="lead">Rejoins la formation et commence aujourd'hui.</p>
-      <a href="#tarifs" class="btn btn-lg">Accéder à la formation →</a>
+      <p class="muted">Accès immédiat · Satisfait ou remboursé 14 jours</p>
+      <button class="btn" data-buy="pro">Rejoindre MotionClaude · 197 €</button>
     </div>
   </section>
+</main>
 
-  <footer class="footer">
-    <div class="container footer-inner">
-      <span>© <span id="year"></span> MotionClaude. Tous droits réservés.</span>
-      <span class="muted small">Formation indépendante, non affiliée à Anthropic. Claude est une marque d'Anthropic.</span>
-      <nav><a href="#">Mentions légales</a><a href="#">CGV</a><a href="#">Contact</a></nav>
+<footer>
+  <div class="wrap">
+    <span>© <span id="year">2026</span> MotionClaude</span>
+    <span>Formation indépendante, non affiliée à Anthropic. Claude est une marque d'Anthropic.</span>
+    <span>Mentions légales · CGV · Contact</span>
+  </div>
+</footer>
+
+<div class="sticky-cta">
+  <span class="p"><s>297 €</s>197 €</span>
+  <button class="btn" data-buy="pro">Acheter la formation</button>
+</div>
+
+<div class="overlay" id="checkout" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="co-title">
+    <div class="sheet-head">
+      <div>
+        <span class="tc">Paiement sécurisé</span>
+        <h3 id="co-title" style="margin-top:8px">Finaliser ma commande</h3>
+      </div>
+      <button class="x" id="co-close" aria-label="Fermer">✕</button>
     </div>
-  </footer>
 
-  <script src="script.js"></script>
+    <div class="summary"><span id="co-plan">Formule Pro</span><span id="co-price">197 €</span></div>
+
+    <div class="methods" role="radiogroup" aria-label="Moyen de paiement">
+      <span class="field-label">Moyen de paiement</span>
+      <label class="method">
+        <input type="radio" name="pay" id="pay-card" value="card" checked />
+        <span><b>Carte bancaire</b><small>Paiement unique · Apple Pay et Google Pay acceptés</small></span>
+        <span class="logos"><span class="pm cb">CB</span><span class="pm visa">VISA</span><span class="pm mc"><i></i><i></i></span></span>
+      </label>
+      <label class="method">
+        <input type="radio" name="pay" id="pay-3x" value="split" />
+        <span><b>3× sans frais</b><small id="co-split">3 × 65,67 € · par carte</small></span>
+        <span class="logos"><span class="pm cb">3×</span></span>
+      </label>
+      <label class="method">
+        <input type="radio" name="pay" id="pay-paypal" value="paypal" />
+        <span><b>PayPal</b><small>Avec ton compte PayPal ou en 4× PayPal</small></span>
+        <span class="logos"><span class="pm pp"><b>P</b>P</span></span>
+      </label>
+    </div>
+
+    <p class="notice" id="co-notice" hidden>Ce moyen de paiement n'est pas encore activé. Le propriétaire du site doit ajouter son lien de paiement dans la configuration.</p>
+
+    <button class="btn block" id="co-pay">Payer 197 €</button>
+    <p class="fine">🔒 Tu es redirigé vers notre prestataire de paiement sécurisé. Tes données bancaires ne transitent jamais par ce site. Accès envoyé par e-mail immédiatement après le paiement.</p>
+  </div>
+</div>
+
+<script>
+/* ========= CONFIGURATION DES PAIEMENTS =========
+   Colle ici tes liens de paiement (Stripe Payment Links, PayPal, Systeme.io, Gumroad...).
+   card   : lien Stripe en paiement unique (CB, Apple Pay, Google Pay)
+   split  : lien Stripe en 3 fois (abonnement 3 mensualités)
+   paypal : lien PayPal (bouton "Acheter" ou PayPal.me)
+*/
+const PAYMENT_LINKS = {
+  essentiel: { card: "", split: "", paypal: "" },
+  pro:       { card: "", split: "", paypal: "" },
+  coaching:  { card: "", split: "", paypal: "" },
+};
+const LAUNCH_OFFER_END = "2026-10-31T23:59:59";
+
+const PLANS = {
+  essentiel: { name: "Formule Essentiel", price: 97 },
+  pro:       { name: "Formule Pro", price: 197 },
+  coaching:  { name: "Formule Coaching", price: 497 },
+};
+const eur = (n) => n.toLocaleString("fr-FR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + " €";
+
+const overlay = document.getElementById("checkout");
+const payBtn = document.getElementById("co-pay");
+const notice = document.getElementById("co-notice");
+let currentPlan = "pro";
+
+function method() { return document.querySelector('input[name="pay"]:checked').value; }
+function refresh() {
+  const p = PLANS[currentPlan];
+  const third = Math.round(p.price / 3 * 100) / 100;
+  document.getElementById("co-plan").textContent = p.name;
+  document.getElementById("co-price").textContent = eur(p.price);
+  document.getElementById("co-split").textContent = "3 × " + eur(third) + " · par carte";
+  const m = method();
+  payBtn.textContent = m === "split" ? "Payer 3 × " + eur(third) : m === "paypal" ? "Continuer avec PayPal" : "Payer " + eur(p.price);
+  notice.hidden = true;
+}
+function openCheckout(plan) {
+  currentPlan = plan in PLANS ? plan : "pro";
+  refresh();
+  overlay.hidden = false;
+  document.body.style.overflow = "hidden";
+  document.getElementById("co-close").focus();
+}
+function closeCheckout() { overlay.hidden = true; document.body.style.overflow = ""; }
+
+document.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => openCheckout(b.dataset.buy)));
+document.querySelectorAll('input[name="pay"]').forEach((r) => r.addEventListener("change", refresh));
+document.getElementById("co-close").addEventListener("click", closeCheckout);
+overlay.addEventListener("click", (e) => { if (e.target === overlay) closeCheckout(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeCheckout(); });
+payBtn.addEventListener("click", () => {
+  const url = PAYMENT_LINKS[currentPlan][method()];
+  if (!url) { notice.hidden = false; return; }
+  window.location.href = url;
+});
+
+/* Prompt typing in the hero */
+const prompts = [
+  "Fais rebondir le logo avec un easing élastique",
+  "Crée une intro de 5 s en kinetic typography",
+  "Écris une expression AE pour un wiggle qui s'arrête",
+  "Décline cette animation en 9:16 et 1:1",
+];
+const typed = document.getElementById("typed");
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  let pi = 0, ci = prompts[0].length, del = false;
+  setTimeout(function loop() {
+    const t = prompts[pi];
+    typed.textContent = t.slice(0, ci);
+    if (!del && ci < t.length) { ci++; setTimeout(loop, 45); }
+    else if (!del) { del = true; setTimeout(loop, 1800); }
+    else if (ci > 0) { ci--; setTimeout(loop, 18); }
+    else { del = false; pi = (pi + 1) % prompts.length; setTimeout(loop, 250); }
+  }, 1800);
+}
+
+/* Launch-offer countdown */
+const cdTop = document.getElementById("cd-top");
+const end = new Date(LAUNCH_OFFER_END).getTime();
+function tick() {
+  const d = end - Date.now();
+  if (!(d > 0)) { cdTop.closest(".promo").hidden = true; return; }
+  const j = Math.floor(d / 864e5), h = Math.floor(d / 36e5) % 24, m = Math.floor(d / 6e4) % 60, s = Math.floor(d / 1e3) % 60;
+  cdTop.textContent = `${j}j ${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`;
+}
+tick(); setInterval(tick, 1000);
+document.getElementById("year").textContent = new Date().getFullYear();
+</script>
 </body>
 </html>
