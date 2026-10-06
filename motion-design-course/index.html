@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>MotionClaude</title>
-<meta name="description" content="La formation pour créer du motion design pro avec Claude : After Effects, Remotion, GSAP, Lottie. De l'idée au rendu, sans savoir coder." />
+<title>Motion IA</title>
+<meta name="description" content="Réponds à quelques questions et reçois ton plan Motion IA personnalisé pour créer des animations pro avec l'intelligence artificielle." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
 <style>
-/* Layout: timeline-inspired sales page — hero with live easing curve, then sections marked by timecodes, ending on a checkout sheet */
+/* Layout: app-like quiz funnel — one question per screen in a centred column, progress bar on top, ends on a personalised plan and checkout */
 :root {
   --bg: #0e1030;
   --bg-2: #15183f;
@@ -43,238 +43,201 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { scroll-behavior: smooth; }
 body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font-family: var(--font-body); font-size: 17px; line-height: 1.6;
-  overflow-x: hidden;
+  margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.55;
+  overflow-x: hidden; display: flex; flex-direction: column;
 }
-h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
-h1 { font-size: clamp(2.1rem, 5.6vw, 4rem); font-weight: 800; }
-h2 { font-size: clamp(1.6rem, 3.6vw, 2.5rem); font-weight: 700; }
-h3 { font-size: 1.1rem; font-weight: 700; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+h1 { font-size: clamp(1.9rem, 6vw, 2.9rem); font-weight: 800; }
+h2 { font-size: clamp(1.4rem, 4.6vw, 1.9rem); font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 700; }
 p { margin: 0; }
-a { color: inherit; }
-:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
-
-.wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding-inline: 20px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; border-radius: 8px; }
 .muted { color: var(--muted); }
-.mono { font-family: var(--font-mono); }
 .hl { color: var(--accent); }
+.tc { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em; color: var(--cyan); text-transform: uppercase; display: inline-flex; gap: 10px; align-items: center; }
+.tc::before { content: ""; width: 8px; height: 8px; background: var(--cyan); transform: rotate(45deg); flex: none; }
 
-.tc { font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; color: var(--cyan); text-transform: uppercase; display: inline-flex; gap: 10px; align-items: center; }
-.tc::before { content: ""; width: 8px; height: 8px; background: var(--cyan); transform: rotate(45deg); }
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top-inner { max-width: 640px; margin: 0 auto; padding: 0 16px; height: 60px; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; }
+.back { grid-column: 1; grid-row: 1; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: none; cursor: pointer; font-size: 1.1rem; }
+.logo { grid-column: 2; grid-row: 1; justify-self: center; font-family: var(--font-display); font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.logo b { color: var(--accent); }
+.progress { height: 4px; background: var(--bg-2); }
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .4s cubic-bezier(.2,.8,.2,1); }
+
+/* Screen */
+main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 28px 16px 130px; }
+.screen { display: grid; gap: 22px; animation: enter .35s cubic-bezier(.2,.8,.2,1); }
+@keyframes enter { from { opacity: .3; transform: translateY(14px); } }
+.q-head { display: grid; gap: 10px; }
+.q-head p { color: var(--muted); }
+.step-count { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+
+/* Options */
+.opts { display: grid; gap: 10px; }
+.opts.two { grid-template-columns: 1fr 1fr; }
+.opt {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; text-align: left;
+  width: 100%; padding: 16px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface);
+  cursor: pointer; transition: border-color .15s, transform .1s, background .15s;
+}
+.opt:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.opt:active { transform: scale(.98); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.opt .ic { font-size: 1.5rem; width: 34px; text-align: center; }
+.opt b { display: block; font-weight: 700; }
+.opt small { display: block; color: var(--muted); font-size: .86rem; }
+.opt .tick { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line); display: grid; place-items: center; font-size: .8rem; color: var(--accent-ink); }
+.opt.radio .tick { border-radius: 50%; }
+.opt[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); }
+.opts.two .opt { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 18px 10px; gap: 6px; }
+.opts.two .opt .tick { display: none; }
 
 /* Buttons */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font: 700 1rem var(--font-body); text-decoration: none; cursor: pointer;
-  background: var(--accent); color: var(--accent-ink); border: 2px solid var(--accent);
-  padding: 15px 26px; border-radius: 12px; transition: transform .15s, box-shadow .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; cursor: pointer;
+  font: 800 1.02rem var(--font-body); background: var(--accent); color: var(--accent-ink);
+  border: 2px solid var(--accent); padding: 16px 24px; border-radius: 14px; width: 100%;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
 }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px var(--accent); }
-.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
-.btn.ghost:hover { border-color: var(--fg); box-shadow: none; }
-.btn.block { width: 100%; }
-.btn.sm { padding: 9px 16px; font-size: .9rem; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px var(--accent); }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+.cta-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.cta-bar > div { max-width: 640px; margin: 0 auto; display: grid; gap: 6px; }
+.cta-bar small { text-align: center; color: var(--muted); font-size: .8rem; }
 
-/* Top bar */
-.promo { background: var(--accent); color: var(--accent-ink); text-align: center; font-weight: 700; font-size: .9rem; padding: 9px 16px; }
-.promo .mono { font-weight: 600; }
-.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
-.logo { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-.logo svg { flex: none; }
-.nav-links { display: flex; gap: 26px; }
-.nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; font-size: .95rem; }
-.nav-links a:hover { color: var(--fg); }
+/* Intro */
+.intro .lead { font-size: 1.1rem; color: var(--muted); }
+.intro .lead b { color: var(--fg); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.checks li::before { content: "✓  "; color: var(--ok); font-weight: 800; }
 
-/* Hero */
-.hero { padding-block: 64px 72px; }
-.hero .wrap { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
-.hero-copy { display: grid; gap: 22px; min-width: 0; }
-.hero-copy .lead { font-size: 1.15rem; color: var(--muted); max-width: 34em; }
-.hero-copy .lead b { color: var(--fg); }
-.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
-.trust { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: .9rem; color: var(--muted); }
-.trust span::before { content: "✓ "; color: var(--ok); font-weight: 700; }
-
-/* Editor mock */
-.editor { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; box-shadow: 0 40px 80px -40px rgba(0,0,0,.6); }
-.editor-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: .75rem; color: var(--muted); }
-.editor-prompt { padding: 14px 16px; font-family: var(--font-mono); font-size: .85rem; min-height: 70px; border-bottom: 1px solid var(--line); }
+.editor { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.editor-top { display: flex; justify-content: space-between; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.editor-prompt { padding: 12px 14px; font-family: var(--font-mono); font-size: .82rem; min-height: 62px; border-bottom: 1px solid var(--line); }
 .editor-prompt .who { color: var(--accent); }
 .caret { color: var(--accent); animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
-.stage { position: relative; height: 210px; overflow: hidden; }
-.stage .ball { position: absolute; left: 8%; bottom: 26px; width: 46px; height: 46px; border-radius: 50%; background: var(--accent); animation: travel 3s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate; }
-.stage .word { position: absolute; top: 34px; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: .18em; animation: word 3s cubic-bezier(.2,.8,.2,1) infinite alternate; }
-.stage .ground { position: absolute; left: 6%; right: 6%; bottom: 25px; height: 1px; background: var(--line); }
-@keyframes travel { to { left: calc(92% - 46px); transform: rotate(360deg); } }
-@keyframes word { 0% { opacity: 0; letter-spacing: .6em; } 60%, 100% { opacity: 1; letter-spacing: .18em; } }
-.curve { display: grid; grid-template-columns: 120px 1fr; border-top: 1px solid var(--line); }
-.curve svg { display: block; width: 100%; height: auto; }
-.curve-meta { padding: 12px 14px; font-family: var(--font-mono); font-size: .72rem; color: var(--muted); display: grid; gap: 4px; align-content: center; border-left: 1px solid var(--line); min-width: 0; }
-.curve-meta b { color: var(--fg); font-weight: 600; overflow-wrap: anywhere; }
-.timeline { position: relative; padding: 10px 14px 14px; display: grid; gap: 6px; border-top: 1px solid var(--line); }
-.track { position: relative; height: 8px; border-radius: 4px; background: var(--surface); }
-.kf { position: absolute; top: 50%; width: 9px; height: 9px; background: var(--gold); transform: translate(-50%,-50%) rotate(45deg); }
-.playhead { position: absolute; top: 4px; bottom: 8px; left: 14px; width: 2px; background: var(--accent); animation: play 3s linear infinite alternate; }
+.stage { position: relative; height: 150px; overflow: hidden; }
+.stage .ball { position: absolute; left: 8%; bottom: 22px; width: 38px; height: 38px; border-radius: 50%; background: var(--accent); animation: travel 2.6s cubic-bezier(.68,-0.55,.27,1.55) infinite alternate; }
+.stage .word { position: absolute; top: 26px; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; letter-spacing: .18em; animation: word 2.6s cubic-bezier(.2,.8,.2,1) infinite alternate; }
+.stage .ground { position: absolute; left: 6%; right: 6%; bottom: 21px; height: 1px; background: var(--line); }
+@keyframes travel { to { left: calc(92% - 38px); transform: rotate(360deg); } }
+@keyframes word { 0% { opacity: .1; letter-spacing: .5em; } 60%, 100% { opacity: 1; letter-spacing: .18em; } }
+.timeline { position: relative; padding: 10px 14px 12px; display: grid; gap: 6px; border-top: 1px solid var(--line); }
+.track { position: relative; height: 7px; border-radius: 4px; background: var(--surface); }
+.kf { position: absolute; top: 50%; width: 8px; height: 8px; background: var(--gold); transform: translate(-50%,-50%) rotate(45deg); }
+.playhead { position: absolute; top: 4px; bottom: 6px; left: 14px; width: 2px; background: var(--accent); animation: play 2.6s linear infinite alternate; }
 @keyframes play { to { left: calc(100% - 14px); } }
 
-/* Tools strip */
-.tools { border-block: 1px solid var(--line); padding-block: 22px; overflow: hidden; }
-.tools-track { display: flex; gap: 48px; width: max-content; animation: scroll 32s linear infinite; }
-.tools-track span { font-family: var(--font-display); font-weight: 700; color: var(--muted); white-space: nowrap; font-size: 1.05rem; }
-@keyframes scroll { to { transform: translateX(-50%); } }
+/* Info screens */
+.info-card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 14px; }
+.big-num { font-family: var(--font-display); font-weight: 800; font-size: 2.4rem; color: var(--accent); line-height: 1; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.compare > div { border-radius: 12px; padding: 14px; border: 1px solid var(--line); display: grid; gap: 4px; }
+.compare .now { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.compare span { font-family: var(--font-mono); font-size: .75rem; color: var(--muted); text-transform: uppercase; }
+.compare b { font-family: var(--font-display); font-size: 1.3rem; }
 
-/* Sections */
-section.block { padding-block: 88px; }
-section.alt { background: var(--bg-2); }
-.head { display: grid; gap: 14px; max-width: 720px; margin-bottom: 44px; }
-.head p { color: var(--muted); font-size: 1.05rem; }
+/* Lead form */
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 700; font-size: .92rem; }
+.field input { width: 100%; padding: 15px 16px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--fg); font: 500 1rem var(--font-body); }
+.field input:focus { outline: none; border-color: var(--accent); }
+.field .err { color: var(--accent); font-size: .85rem; }
+.consent { font-size: .82rem; color: var(--muted); }
 
-/* Before / after */
-.ba { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.ba > div { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; display: grid; gap: 14px; align-content: start; min-width: 0; }
-.ba .after { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
-.ba ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.ba .before li { color: var(--muted); }
-.ba .before li::before { content: "✕  "; color: var(--muted); }
-.ba .after li::before { content: "✓  "; color: var(--ok); font-weight: 700; }
-.ba .label { font-family: var(--font-mono); font-size: .8rem; }
+/* Loading */
+.loader { justify-items: center; text-align: center; padding-top: 30px; }
+.ring { width: 140px; height: 140px; position: relative; }
+.ring svg { transform: rotate(-90deg); }
+.ring span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; font-variant-numeric: tabular-nums; }
+.load-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; text-align: left; width: 100%; max-width: 340px; }
+.load-list li { color: var(--muted); display: flex; gap: 10px; align-items: center; transition: color .3s; }
+.load-list li::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); flex: none; }
+.load-list li.done { color: var(--fg); }
+.load-list li.done::before { background: var(--ok); border-color: var(--ok); }
 
-/* Curriculum */
-.mods { display: grid; gap: 10px; }
-.mod { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.mod summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; padding: 18px 20px; font-weight: 700; }
-.mod summary::-webkit-details-marker { display: none; }
-.mod .t { font-family: var(--font-mono); font-size: .78rem; color: var(--cyan); font-weight: 400; }
-.mod .d { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); font-weight: 400; }
-.mod p { padding: 0 20px 18px; color: var(--muted); }
-.mod[open] { border-color: var(--accent); }
+/* Result */
+.profile { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.profile > div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.profile span { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.profile b { overflow-wrap: anywhere; }
+.first { border: 2px solid var(--accent); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.first .vis { height: 140px; }
+.first > div:last-child { padding: 18px; display: grid; gap: 8px; }
+.date-pill { justify-self: start; font-family: var(--font-mono); font-size: .8rem; padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.path { list-style: none; margin: 0; padding: 0; display: grid; }
+.path li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding-bottom: 18px; position: relative; }
+.path li::after { content: ""; position: absolute; left: 16px; top: 34px; bottom: 4px; width: 2px; background: var(--line); }
+.path li:last-child::after { display: none; }
+.path .n { width: 34px; height: 34px; border-radius: 50%; background: var(--bg-2); border: 2px solid var(--cyan); display: grid; place-items: center; font-family: var(--font-mono); font-size: .8rem; color: var(--cyan); }
+.path b { display: block; }
+.path small { color: var(--muted); font-size: .9rem; }
+.callout { border-left: 3px solid var(--gold); padding: 4px 0 4px 16px; display: grid; gap: 4px; }
+.callout span { font-family: var(--font-mono); font-size: .75rem; color: var(--gold); text-transform: uppercase; }
 
-/* Projects */
-.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.proj { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
-.proj p { color: var(--muted); font-size: .95rem; }
-.vis { height: 130px; border-radius: 10px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden; }
-.v1 i { width: 54px; height: 54px; border: 4px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin 1.4s cubic-bezier(.6,0,.4,1) infinite; }
+/* Project visuals */
+.vis { background: var(--bg-2); display: flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden; }
+.v-logo i { width: 54px; height: 54px; border: 4px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin 1.4s cubic-bezier(.6,0,.4,1) infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.v2 i { width: 12px; height: 48px; border-radius: 3px; background: var(--cyan); animation: eq .9s ease-in-out infinite alternate; }
-.v2 i:nth-child(2) { animation-delay: .15s; background: var(--accent); } .v2 i:nth-child(3) { animation-delay: .3s; background: var(--gold); }
+.v-type i { width: 12px; height: 48px; border-radius: 3px; background: var(--cyan); animation: eq .9s ease-in-out infinite alternate; }
+.v-type i:nth-child(2) { animation-delay: .15s; background: var(--accent); } .v-type i:nth-child(3) { animation-delay: .3s; background: var(--gold); }
 @keyframes eq { to { transform: scaleY(.3); } }
-.v3 i { width: 38px; height: 38px; background: var(--gold); border-radius: 8px; animation: slide 1.8s cubic-bezier(.7,0,.3,1) infinite alternate; }
+.v-slide i { width: 38px; height: 38px; background: var(--gold); border-radius: 8px; animation: slide 1.8s cubic-bezier(.7,0,.3,1) infinite alternate; }
 @keyframes slide { from { transform: translateX(-70px); } to { transform: translateX(70px) rotate(180deg); border-radius: 50%; } }
-.v4 i { width: 44px; height: 78px; border: 2px solid var(--accent); border-radius: 9px; animation: bob 2s ease-in-out infinite; }
-.v4 i:nth-child(2) { animation-delay: -1s; border-color: var(--cyan); }
+.v-phone i { width: 40px; height: 72px; border: 2px solid var(--accent); border-radius: 9px; animation: bob 2s ease-in-out infinite; }
+.v-phone i:nth-child(2) { animation-delay: -1s; border-color: var(--cyan); }
 @keyframes bob { 50% { transform: translateY(-12px); } }
-.v5 i { width: 86px; height: 34px; border-radius: 999px; background: var(--accent); animation: press 1.4s ease-in-out infinite; }
+.v-btn i { width: 86px; height: 34px; border-radius: 999px; background: var(--accent); animation: press 1.4s ease-in-out infinite; }
 @keyframes press { 40% { transform: scale(.88); } 60% { transform: scale(1.06); } }
-.v6 { align-items: flex-end; padding-bottom: 20px; }
-.v6 i { width: 20px; background: var(--cyan); border-radius: 3px 3px 0 0; animation: grow 2.4s cubic-bezier(.7,0,.3,1) infinite; }
-.v6 i:nth-child(1) { --h: 36px; } .v6 i:nth-child(2) { --h: 66px; background: var(--accent); animation-delay: .1s; }
-.v6 i:nth-child(3) { --h: 50px; background: var(--gold); animation-delay: .2s; } .v6 i:nth-child(4) { --h: 86px; animation-delay: .3s; }
+.v-data { align-items: flex-end; padding-bottom: 20px; }
+.v-data i { width: 20px; background: var(--cyan); border-radius: 3px 3px 0 0; animation: grow 2.4s cubic-bezier(.7,0,.3,1) infinite; }
+.v-data i:nth-child(1) { --h: 36px; } .v-data i:nth-child(2) { --h: 66px; background: var(--accent); animation-delay: .1s; }
+.v-data i:nth-child(3) { --h: 50px; background: var(--gold); animation-delay: .2s; } .v-data i:nth-child(4) { --h: 86px; animation-delay: .3s; }
 @keyframes grow { 0% { height: 6px; } 40%, 80% { height: var(--h); } 100% { height: 6px; } }
 
-/* Value stack */
-.stack { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
-.stack-row { display: flex; justify-content: space-between; gap: 16px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
-.stack-row span:last-child { font-family: var(--font-mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.stack-total { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; padding: 20px 22px; background: var(--bg-2); }
-.stack-total s { color: var(--muted); font-family: var(--font-mono); }
-.stack-total strong { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); }
-
-/* For who */
-.who { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.who div { border-top: 3px solid var(--accent); padding-top: 14px; display: grid; gap: 6px; min-width: 0; }
-.who div:nth-child(2) { border-color: var(--cyan); } .who div:nth-child(3) { border-color: var(--gold); } .who div:nth-child(4) { border-color: var(--ok); }
-.who p { color: var(--muted); font-size: .95rem; }
-
-/* Pricing */
-.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: stretch; }
-.plan { position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 28px 24px; display: grid; gap: 18px; grid-template-rows: auto auto 1fr auto; }
-.plan.best { border: 2px solid var(--accent); box-shadow: 0 30px 70px -40px var(--accent); }
-.ribbon { position: absolute; top: -13px; left: 24px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .75rem; padding: 4px 12px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; }
-.price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
-.price .amt { font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; font-variant-numeric: tabular-nums; }
-.price s { color: var(--muted); font-family: var(--font-mono); }
-.price small { width: 100%; color: var(--muted); font-size: .88rem; }
-.plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; align-content: start; }
-.plan li::before { content: "✓  "; color: var(--ok); font-weight: 700; }
-
-.paybar { margin-top: 28px; display: grid; gap: 12px; justify-items: center; text-align: center; }
-.logos { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.pm { display: inline-flex; align-items: center; justify-content: center; height: 30px; min-width: 52px; padding: 0 10px; border-radius: 6px; background: #ffffff; color: #1a1a1a; font: 800 .78rem var(--font-body); border: 1px solid var(--line); }
-.pm.visa { color: #1a1f71; font-style: italic; letter-spacing: .02em; }
-.pm.pp { color: #003087; } .pm.pp b { color: #009cde; }
-.pm.cb { background: #1c5c9a; color: #fff; }
-.pm.ap, .pm.gp { background: #000; color: #fff; }
-.pm.mc { gap: 0; } .pm.mc i { width: 16px; height: 16px; border-radius: 50%; background: #eb001b; } .pm.mc i + i { background: #f79e1b; margin-left: -6px; mix-blend-mode: multiply; }
-.secure { font-size: .88rem; color: var(--muted); }
-
-.guarantee { margin-top: 44px; display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; border: 1px dashed var(--ok); border-radius: var(--radius); padding: 24px; }
-.seal { width: 86px; height: 86px; border-radius: 50%; border: 3px solid var(--ok); display: grid; place-items: center; text-align: center; font-family: var(--font-display); font-weight: 800; color: var(--ok); font-size: .8rem; line-height: 1.1; }
-.seal b { font-size: 1.6rem; display: block; }
-.guarantee p { color: var(--muted); }
-
-/* FAQ */
-.faq { border-bottom: 1px solid var(--line); }
-.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 20px; padding: 20px 0; font-weight: 700; }
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; color: var(--accent); font-size: 1.4rem; line-height: 1; transition: transform .2s; }
-.faq[open] summary::after { transform: rotate(45deg); }
-.faq p { color: var(--muted); padding-bottom: 20px; max-width: 62ch; }
-
-.final { text-align: center; padding-block: 96px; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%); }
-.final .wrap { display: grid; gap: 20px; justify-items: center; }
-
-footer { border-top: 1px solid var(--line); padding-block: 28px 100px; font-size: .88rem; color: var(--muted); }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
-
-/* Sticky mobile CTA */
-.sticky-cta { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: 1px solid var(--line); align-items: center; gap: 12px; }
-.sticky-cta .p { font-family: var(--font-display); font-weight: 800; white-space: nowrap; }
-.sticky-cta .p s { font-family: var(--font-mono); font-weight: 400; color: var(--muted); font-size: .8rem; margin-right: 6px; }
-.sticky-cta .btn { flex: 1; padding: 13px 16px; }
-
-/* Checkout sheet */
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(5,6,20,.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.sheet { width: 100%; max-width: 480px; max-height: 100%; overflow-y: auto; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; display: grid; gap: 18px; }
-.sheet-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
-.x { background: none; border: 1px solid var(--line); color: var(--fg); width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; flex: none; }
-.summary { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--bg-2); font-weight: 700; }
-.summary span:last-child { font-family: var(--font-mono); }
-.field-label { font-size: .8rem; font-family: var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+/* Checkout */
+.deadline { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .92rem; }
+.deadline .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plans { display: grid; gap: 14px; }
+.plan { position: relative; text-align: left; width: 100%; border: 2px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 18px; cursor: pointer; display: grid; gap: 10px; }
+.plan[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.plan-top { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+.plan .tick { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); }
+.plan[aria-pressed="true"] .tick { border: 7px solid var(--accent); }
+.plan .pr { text-align: right; }
+.plan .pr b { font-family: var(--font-display); font-size: 1.35rem; display: block; font-variant-numeric: tabular-nums; }
+.plan .pr s { color: var(--muted); font-family: var(--font-mono); font-size: .82rem; }
+.plan .pr small { display: block; color: var(--muted); font-size: .78rem; }
+.plan ul { list-style: none; margin: 0; padding: 0 0 0 34px; display: grid; gap: 5px; font-size: .92rem; color: var(--muted); }
+.plan li::before { content: "✓  "; color: var(--ok); font-weight: 800; }
+.plan:not([aria-pressed="true"]) ul { display: none; }
+.badge { position: absolute; top: -11px; right: 16px; background: var(--gold); color: var(--bg); font-weight: 800; font-size: .7rem; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
 .methods { display: grid; gap: 10px; }
-.method { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px; border: 2px solid var(--line); border-radius: 12px; cursor: pointer; }
-.method:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-.method input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
-.method small { display: block; color: var(--muted); font-size: .82rem; }
-.method .logos { justify-content: flex-end; gap: 4px; }
-.method .pm { height: 22px; min-width: 34px; font-size: .62rem; padding: 0 5px; }
-.method .pm.mc i { width: 11px; height: 11px; }
-.notice { font-size: .9rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--gold); color: var(--fg); background: color-mix(in srgb, var(--gold) 10%, transparent); }
-.fine { font-size: .8rem; color: var(--muted); text-align: center; }
+.label { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.logos { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+.pm { display: inline-flex; align-items: center; justify-content: center; height: 24px; min-width: 38px; padding: 0 6px; border-radius: 5px; background: #ffffff; color: #1a1a1a; font: 800 .66rem var(--font-body); border: 1px solid #d9d8f0; }
+.pm.visa { color: #1a1f71; font-style: italic; }
+.pm.pp { color: #003087; } .pm.pp b { color: #009cde; }
+.pm.cb { background: #1c5c9a; color: #ffffff; border-color: #1c5c9a; }
+.pm.mc i { width: 12px; height: 12px; border-radius: 50%; background: #eb001b; } .pm.mc i + i { background: #f79e1b; margin-left: -5px; }
+.notice { font-size: .9rem; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+.guarantee { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; border: 1px dashed var(--ok); border-radius: var(--radius); padding: 16px; }
+.seal { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--ok); display: grid; place-items: center; text-align: center; font-family: var(--font-display); font-weight: 800; color: var(--ok); font-size: .6rem; line-height: 1.1; }
+.seal b { font-size: 1.2rem; display: block; }
+.guarantee p { color: var(--muted); font-size: .9rem; }
+.restart { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: .85rem; justify-self: center; }
 
-@media (max-width: 960px) {
-  .hero .wrap, .ba { grid-template-columns: 1fr; }
-  .grid3, .plans { grid-template-columns: 1fr; }
-  .who { grid-template-columns: 1fr 1fr; }
-  .plan.best { order: -1; }
-}
-@media (max-width: 640px) {
-  body { font-size: 16px; }
-  .wrap { padding-inline: 16px; }
-  .nav-links { display: none; }
-  .hero { padding-block: 40px 56px; }
-  section.block { padding-block: 64px; }
-  .who { grid-template-columns: 1fr; }
-  .sticky-cta { display: flex; }
-  .guarantee { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .curve { grid-template-columns: 90px 1fr; }
-  .mod summary { grid-template-columns: auto 1fr; }
-  .mod .d { display: none; }
+footer { border-top: 1px solid var(--line); padding: 20px 16px 120px; font-size: .82rem; color: var(--muted); text-align: center; }
+
+@media (max-width: 420px) {
+  .profile { grid-template-columns: 1fr; }
+  .opt { padding: 14px 12px; gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -283,388 +246,517 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: 
 </head>
 <body>
 
-<div class="promo">Offre de lancement : <b>-100 €</b> sur la formule Pro · fin dans <span class="mono" id="cd-top">—</span></div>
-
-<header class="nav">
-  <div class="wrap">
-    <a href="#top" class="logo" aria-label="MotionClaude, accueil">
-      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M3 24 C 10 24, 10 4, 25 4" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="4" r="3" fill="var(--cyan)"/></svg>
-      MotionClaude
-    </a>
-    <nav class="nav-links" aria-label="Sections">
-      <a href="#programme">Programme</a>
-      <a href="#projets">Projets</a>
-      <a href="#tarifs">Tarifs</a>
-      <a href="#faq">FAQ</a>
-    </nav>
-    <button class="btn sm" data-buy="pro">Acheter</button>
+<header class="top">
+  <div class="top-inner">
+    <button class="back" id="back" aria-label="Question précédente" hidden>←</button>
+    <span class="logo">
+      <svg width="24" height="24" viewBox="0 0 28 28" aria-hidden="true"><path d="M3 24 C 10 24, 10 4, 25 4" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="4" r="3" fill="var(--cyan)"/></svg>
+      Motion <b>IA</b>
+    </span>
   </div>
+  <div class="progress"><i id="bar"></i></div>
 </header>
 
-<main id="top">
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-copy">
-        <span class="tc">Formation vidéo · accès immédiat</span>
-        <h1>Tu décris l'animation.<br><span class="hl">Claude</span> l'anime.</h1>
-        <p class="lead">Apprends à créer du <b>motion design professionnel</b> en pilotant Claude : expressions After Effects, vidéos Remotion, animations web GSAP et Lottie. <b>Sans savoir coder</b>, et jusqu'à 10 fois plus vite.</p>
-        <div class="hero-ctas">
-          <button class="btn" data-buy="pro">Je commence maintenant · 197 €</button>
-          <a href="#programme" class="btn ghost">Voir le programme</a>
-        </div>
-        <div class="trust">
-          <span>Satisfait ou remboursé 14 jours</span>
-          <span>Paiement en 3× sans frais</span>
-          <span>Accès à vie</span>
-        </div>
-      </div>
+<main id="app" aria-live="polite"></main>
 
-      <div class="editor" aria-label="Exemple : un prompt devient une animation">
-        <div class="editor-top"><span>logo_bounce.comp</span><span>1920×1080 · 60 fps</span></div>
-        <div class="editor-prompt"><span class="who">Toi ›</span> <span id="typed">Fais rebondir le logo avec un easing élastique</span><span class="caret">▍</span></div>
-        <div class="stage">
-          <div class="word">LAUNCH</div>
-          <div class="ground"></div>
-          <div class="ball"></div>
-        </div>
-        <div class="curve">
-          <svg viewBox="0 0 120 90" aria-hidden="true">
-            <line x1="10" y1="80" x2="110" y2="80" stroke="var(--line)" />
-            <line x1="10" y1="10" x2="10" y2="80" stroke="var(--line)" />
-            <path d="M10 80 C 33 130, 37 -40, 110 10" fill="none" stroke="var(--accent)" stroke-width="2.5" />
-            <circle cx="10" cy="80" r="3.5" fill="var(--gold)" /><circle cx="110" cy="10" r="3.5" fill="var(--gold)" />
-          </svg>
-          <div class="curve-meta"><span>easing</span><b>cubic-bezier(.68,-.55,.27,1.55)</b><span>00:00:03:00 · back in-out</span></div>
-        </div>
+<div class="cta-bar" id="cta-bar" hidden>
+  <div><button class="btn" id="cta"></button><small id="cta-note" hidden></small></div>
+</div>
+
+<footer>© <span id="year">2026</span> Motion IA · Mentions légales · CGV · Contact</footer>
+
+<script>
+/* ===================== CONFIGURATION ===================== */
+/* Liens de paiement par formule.
+   card   : Stripe Payment Link paiement unique (CB, Apple Pay, Google Pay)
+   split  : Stripe Payment Link en 3 mensualités
+   paypal : lien PayPal                                                       */
+const PAYMENT_LINKS = {
+  essentiel: { card: "", split: "", paypal: "" },
+  pro:       { card: "", split: "", paypal: "" },
+  coaching:  { card: "", split: "", paypal: "" },
+};
+/* URL qui reçoit les réponses + e-mail (Systeme.io, Brevo, Make, Zapier...). Vide = désactivé. */
+const LEAD_WEBHOOK_URL = "";
+/* Fin de l'offre de lancement. Après cette date, les prix barrés disparaissent. */
+const LAUNCH_OFFER_END = "2026-10-31T23:59:59";
+
+const PLANS = {
+  essentiel: { name: "Essentiel", price: 97, old: 147 },
+  pro:       { name: "Pro", price: 197, old: 297 },
+  coaching:  { name: "Coaching", price: 497, old: 697 },
+};
+
+/* ===================== CONTENU DU QUIZ ===================== */
+const O = {
+  goal: [
+    { v: "freelance", ic: "💼", l: "Devenir motion designer freelance", s: "Vendre mes animations à des clients" },
+    { v: "social", ic: "📱", l: "Créer du contenu pour mes réseaux", s: "Reels, TikTok, YouTube" },
+    { v: "brand", ic: "🏢", l: "Animer pour mon entreprise", s: "Pubs, présentations, site web" },
+    { v: "editing", ic: "🎬", l: "Améliorer mes montages vidéo", s: "Titres, transitions, habillage" },
+    { v: "passion", ic: "✨", l: "Apprendre par passion", s: "Pour le plaisir de créer" },
+  ],
+  create: [
+    { v: "logo", ic: "🔷", l: "Logos animés" },
+    { v: "social", ic: "📲", l: "Reels / TikTok / Shorts" },
+    { v: "ads", ic: "📣", l: "Publicités vidéo" },
+    { v: "explainer", ic: "💡", l: "Vidéos explicatives" },
+    { v: "type", ic: "🔤", l: "Texte animé" },
+    { v: "youtube", ic: "▶️", l: "Intros YouTube" },
+    { v: "web", ic: "🖱️", l: "Animations de sites et d'apps" },
+    { v: "data", ic: "📊", l: "Graphiques animés" },
+  ],
+  level: [
+    { v: "zero", ic: "🌱", l: "Je pars de zéro", s: "Je n'ai jamais animé" },
+    { v: "basics", ic: "🧩", l: "Je connais les bases", s: "J'ai déjà testé quelques outils" },
+    { v: "inter", ic: "🚀", l: "Je fais déjà des animations", s: "Je veux aller plus vite" },
+    { v: "pro", ic: "🏆", l: "Je suis motion designer", s: "Je veux automatiser mon travail" },
+  ],
+  tools: [
+    { v: "ae", ic: "🟣", l: "After Effects" },
+    { v: "pr", ic: "🎞️", l: "Premiere Pro" },
+    { v: "capcut", ic: "✂️", l: "CapCut" },
+    { v: "canva", ic: "🎨", l: "Canva" },
+    { v: "figma", ic: "📐", l: "Figma" },
+    { v: "davinci", ic: "🎛️", l: "DaVinci Resolve" },
+    { v: "none", ic: "🙅", l: "Aucun pour l'instant", exclusive: true },
+  ],
+  ai: [
+    { v: "often", ic: "🤖", l: "Tous les jours", s: "L'IA fait partie de mon quotidien" },
+    { v: "sometimes", ic: "👌", l: "De temps en temps" },
+    { v: "never", ic: "🤔", l: "Jamais", s: "Je ne sais pas par où commencer" },
+  ],
+  time: [
+    { v: 15, ic: "☕", l: "15 min" },
+    { v: 30, ic: "⏱️", l: "30 min" },
+    { v: 60, ic: "🕐", l: "1 heure" },
+    { v: 120, ic: "🔥", l: "2 h ou plus" },
+  ],
+  blocker: [
+    { v: "time", ic: "⏳", l: "Le manque de temps" },
+    { v: "tech", ic: "🧠", l: "La technique me paraît compliquée" },
+    { v: "ideas", ic: "💭", l: "Je manque d'idées" },
+    { v: "clients", ic: "🤝", l: "Trouver des clients" },
+    { v: "soft", ic: "💸", l: "Les logiciels coûtent cher" },
+  ],
+  income: [
+    { v: 500, ic: "🌿", l: "500 € / mois", s: "Un complément de revenu" },
+    { v: 1500, ic: "🌳", l: "1 500 € / mois" },
+    { v: 3000, ic: "🏔️", l: "3 000 € / mois", s: "En faire mon métier" },
+    { v: 5000, ic: "🚀", l: "5 000 € / mois ou plus" },
+  ],
+};
+
+const PROJECTS = {
+  logo:      { t: "Ton logo animé", d: "Un reveal de logo de 3 secondes, exporté en vidéo et en GIF.", vis: "v-logo", n: 1 },
+  social:    { t: "Ton pack de 5 Reels animés", d: "Des templates 9:16 que tu déclines en un clic pour tes réseaux.", vis: "v-phone", n: 2 },
+  ads:       { t: "Ta pub vidéo de 15 secondes", d: "Accroche, produit, appel à l'action : prête à diffuser.", vis: "v-slide", n: 1 },
+  explainer: { t: "Ta vidéo explicative de 60 s", d: "Du script écrit avec l'IA jusqu'à l'export final.", vis: "v-slide", n: 1 },
+  type:      { t: "Ta vidéo de texte animé", d: "Une citation ou un message animé au rythme d'une musique.", vis: "v-type", n: 3 },
+  youtube:   { t: "Ton intro YouTube", d: "5 secondes d'intro et un habillage pour ta chaîne.", vis: "v-logo", n: 1 },
+  web:       { t: "Tes micro-interactions", d: "Boutons, loaders et transitions prêts pour un site ou une app.", vis: "v-btn", n: 1 },
+  data:      { t: "Ton graphique animé", d: "Des chiffres qui s'animent à partir d'un simple tableur.", vis: "v-data", n: 4 },
+};
+
+const LABEL = (k, v) => (O[k].find((o) => o.v === v) || {}).l || "";
+
+/* ===================== ÉTAPES ===================== */
+const STEPS = [
+  { id: "intro", type: "intro" },
+  { id: "goal", type: "single", q: "Quel est ton objectif avec le motion design ?", sub: "On construit tout ton parcours autour de cette réponse." },
+  { id: "create", type: "multi", q: "Qu'est-ce que tu veux créer ?", sub: "Choisis tout ce qui t'intéresse.", two: true },
+  { id: "info1", type: "info" },
+  { id: "level", type: "single", q: "Quel est ton niveau en motion design ?" },
+  { id: "tools", type: "multi", q: "Quels logiciels utilises-tu déjà ?", sub: "Plusieurs réponses possibles.", two: true },
+  { id: "ai", type: "single", q: "Utilises-tu déjà l'intelligence artificielle ?" },
+  { id: "info2", type: "info" },
+  { id: "time", type: "single", q: "Combien de temps peux-tu y consacrer par jour ?", two: true },
+  { id: "blocker", type: "single", q: "Qu'est-ce qui te freine le plus aujourd'hui ?" },
+  { id: "income", type: "single", q: "Combien aimerais-tu gagner avec le motion design ?", when: (a) => a.goal === "freelance" },
+  { id: "lead", type: "lead" },
+  { id: "loading", type: "loading" },
+  { id: "result", type: "result" },
+  { id: "checkout", type: "checkout" },
+];
+
+/* ===================== ÉTAT ===================== */
+const KEY = "motionia-funnel-v1";
+const fresh = () => ({ i: 0, a: {}, plan: null, pay: "card" });
+let S = fresh();
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved && saved.a) S = Object.assign(S, saved); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function steps() { return STEPS.filter((s) => !s.when || s.when(S.a)); }
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = (n) => n.toLocaleString("fr-FR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + " €";
+const third = (n) => Math.round(n / 3 * 100) / 100;
+const offerOn = () => new Date(LAUNCH_OFFER_END).getTime() > Date.now();
+const priceOf = (k) => (offerOn() ? PLANS[k].price : PLANS[k].old);
+
+const app = document.getElementById("app");
+const bar = document.getElementById("bar");
+const backBtn = document.getElementById("back");
+const ctaBar = document.getElementById("cta-bar");
+const cta = document.getElementById("cta");
+const ctaNote = document.getElementById("cta-note");
+let ctaAction = null, timers = [];
+
+function setCta(label, action, opts = {}) {
+  ctaBar.hidden = !label;
+  cta.textContent = label || "";
+  cta.disabled = !!opts.disabled;
+  ctaAction = action;
+  ctaNote.hidden = !opts.note;
+  ctaNote.textContent = opts.note || "";
+}
+cta.addEventListener("click", () => ctaAction && !cta.disabled && ctaAction());
+
+function go(delta) {
+  const list = steps();
+  S.i = Math.max(0, Math.min(list.length - 1, S.i + delta));
+  if (delta < 0 && list[S.i].type === "loading") S.i--;
+  save(); render();
+  window.scrollTo(0, 0);
+}
+backBtn.addEventListener("click", () => go(-1));
+
+/* ===================== PERSONNALISATION ===================== */
+function plan() {
+  const a = S.a, create = a.create || [], tools = a.tools || [];
+  const hasAE = tools.includes("ae");
+  const mods = [];
+  if (a.level === "zero" || a.level === "basics")
+    mods.push({ t: "Les bases du motion design", s: "Timing, easing et rythme : les réflexes qui rendent une animation pro." });
+  mods.push({ t: "Piloter l'IA comme un animateur", s: a.ai === "never" ? "On part de zéro : ta première demande à l'IA, puis comment corriger le résultat." : "Des demandes précises qui donnent le bon résultat du premier coup." });
+  if (hasAE || a.level === "inter" || a.level === "pro")
+    mods.push({ t: "After Effects + IA : expressions et scripts", s: "L'IA écrit les expressions et automatise tes compositions." });
+  if (!hasAE || a.blocker === "soft" || create.some((c) => ["social", "type", "data"].includes(c)))
+    mods.push({ t: "Animer sans logiciel payant", s: "Tes vidéos générées par l'IA et exportées en MP4 avec des outils gratuits." });
+  if (create.includes("web")) mods.push({ t: "Animations web et apps", s: "Micro-interactions et logos animés prêts à intégrer." });
+  if (create.some((c) => ["social", "ads", "youtube"].includes(c)) || a.goal === "social")
+    mods.push({ t: "Formats réseaux en automatique", s: "Une animation déclinée en 9:16, 1:1 et 16:9 avec sous-titres." });
+  if (create.some((c) => ["explainer", "ads"].includes(c)) || a.blocker === "ideas")
+    mods.push({ t: "Du script au rendu final", s: "L'IA t'aide à trouver l'idée, écrire le script et faire le storyboard." });
+  if (a.goal === "freelance" || a.goal === "brand" || a.blocker === "clients")
+    mods.push({ t: "Trouver et signer des clients", s: "Portfolio, offre, prix et messages de prospection rédigés avec l'IA." });
+
+  const firstKey = [...create].sort((x, y) => PROJECTS[x].n - PROJECTS[y].n)[0] || "logo";
+  let days = { 15: 21, 30: 14, 60: 10, 120: 7 }[a.time] || 14;
+  if (a.level === "inter" || a.level === "pro") days = Math.max(3, Math.round(days / 2));
+  const date = new Date(Date.now() + days * 864e5).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+  let rec = "pro";
+  if (a.goal === "freelance" && (a.income >= 3000 || a.blocker === "clients")) rec = "coaching";
+  else if (a.goal === "passion" && a.blocker === "soft") rec = "essentiel";
+
+  const fix = {
+    time: `Ton plan est calé sur ${LABEL("time", a.time)} par jour, avec des leçons de 10 à 15 minutes.`,
+    tech: "Tu n'écris jamais de code toi-même : tu décris ce que tu veux, l'IA le produit, tu ajustes.",
+    ideas: "Tu reçois une bibliothèque de 150+ idées et demandes prêtes à l'emploi, classées par type de projet.",
+    clients: "Un module complet pour construire ton offre, ton portfolio et tes messages de prospection.",
+    soft: "Une grande partie de ton parcours n'utilise que des outils gratuits.",
+  }[a.blocker] || "";
+
+  return { mods, first: PROJECTS[firstKey], date, rec, fix };
+}
+
+const GOAL_TITLE = {
+  freelance: "devenir motion designer freelance",
+  social: "animer tes contenus pour les réseaux",
+  brand: "créer les animations de ton entreprise",
+  editing: "donner un niveau pro à tes montages",
+  passion: "apprendre le motion design à ton rythme",
+};
+
+/* ===================== RENDU ===================== */
+function optionsHTML(step) {
+  const multi = step.type === "multi";
+  const val = S.a[step.id];
+  return `<div class="opts ${step.two ? "two" : ""}" role="group">` +
+    O[step.id].map((o) => {
+      const on = multi ? (val || []).includes(o.v) : val === o.v;
+      return `<button class="opt ${multi ? "" : "radio"}" data-v="${o.v}" aria-pressed="${on}">
+        <span class="ic" aria-hidden="true">${o.ic}</span>
+        <span><b>${o.l}</b>${o.s ? `<small>${o.s}</small>` : ""}</span>
+        <span class="tick" aria-hidden="true">${multi && on ? "✓" : ""}</span></button>`;
+    }).join("") + `</div>`;
+}
+
+function render() {
+  timers.forEach(clearTimeout); timers = [];
+  const list = steps();
+  if (S.i >= list.length) S.i = list.length - 1;
+  if (list[S.i].type === "loading" && !S.a.email) S.i--;
+  const step = list[S.i];
+  const qs = list.filter((s) => ["single", "multi", "lead"].includes(s.type));
+  const qIndex = qs.indexOf(step);
+  const doneQ = list.slice(0, S.i).filter((s) => qs.includes(s)).length;
+  bar.style.width = (step.type === "intro" ? 0 : Math.min(100, Math.round((doneQ / qs.length) * 100) + 4)) + "%";
+  backBtn.hidden = S.i === 0 || step.type === "loading";
+  setCta(null);
+  RENDER[step.type](step, qIndex, qs.length);
+}
+
+const RENDER = {
+  intro() {
+    app.innerHTML = `<div class="screen intro">
+      <span class="tc">Quiz gratuit · 1 minute</span>
+      <h1>Crée des animations <span class="hl">pro</span> avec l'IA, même sans expérience.</h1>
+      <p class="lead">Réponds à quelques questions et reçois <b>ton plan Motion IA personnalisé</b> : ton parcours, ton premier projet et sa date de livraison.</p>
+      <div class="editor" aria-label="Exemple : une demande devient une animation">
+        <div class="editor-top"><span>logo_bounce</span><span>1080×1920 · 60 fps</span></div>
+        <div class="editor-prompt"><span class="who">Toi ›</span> <span id="typed">Fais rebondir mon logo avec un effet élastique</span><span class="caret">▍</span></div>
+        <div class="stage"><div class="word">LAUNCH</div><div class="ground"></div><div class="ball"></div></div>
         <div class="timeline">
           <div class="track"><span class="kf" style="left:3%"></span><span class="kf" style="left:50%"></span><span class="kf" style="left:97%"></span></div>
           <div class="track"><span class="kf" style="left:20%"></span><span class="kf" style="left:70%"></span></div>
           <div class="playhead"></div>
         </div>
       </div>
-    </div>
-  </section>
+      <ul class="checks">
+        <li>Aucune compétence technique requise</li>
+        <li>Logos, Reels, pubs, intros YouTube, animations web</li>
+        <li>Un plan adapté à ton temps et à ton objectif</li>
+      </ul>
+    </div>`;
+    setCta(S.a.goal ? "Reprendre le quiz →" : "Commencer le quiz →", () => go(1), { note: "Gratuit · sans engagement" });
+    typeLoop();
+  },
 
-  <div class="tools" aria-label="Outils enseignés">
-    <div class="tools-track">
-      <span>After Effects</span><span>Remotion</span><span>GSAP</span><span>Lottie</span><span>Rive</span><span>CSS & SVG</span><span>Three.js</span><span>Blender Python</span><span>Premiere Pro</span>
-      <span aria-hidden="true">After Effects</span><span aria-hidden="true">Remotion</span><span aria-hidden="true">GSAP</span><span aria-hidden="true">Lottie</span><span aria-hidden="true">Rive</span><span aria-hidden="true">CSS & SVG</span><span aria-hidden="true">Three.js</span><span aria-hidden="true">Blender Python</span><span aria-hidden="true">Premiere Pro</span>
-    </div>
-  </div>
+  single(step, qi, qn) {
+    app.innerHTML = `<div class="screen">
+      <div class="q-head"><span class="step-count">Question ${qi + 1} sur ${qn}</span><h2>${step.q}</h2>${step.sub ? `<p>${step.sub}</p>` : ""}</div>
+      ${optionsHTML(step)}</div>`;
+    app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => {
+      const raw = b.dataset.v; const v = isNaN(raw) ? raw : Number(raw);
+      S.a[step.id] = v; save();
+      app.querySelectorAll(".opt").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      timers.push(setTimeout(() => go(1), 260));
+    }));
+  },
 
-  <section class="block">
-    <div class="wrap">
-      <div class="head">
-        <span class="tc">Le problème</span>
-        <h2>Une animation de 10 secondes ne devrait pas prendre ta journée.</h2>
-      </div>
-      <div class="ba">
-        <div class="before">
-          <span class="label muted">SANS CLAUDE</span>
-          <ul>
-            <li>Des heures à placer des keyframes à la main</li>
-            <li>Des expressions After Effects que tu copies sans les comprendre</li>
-            <li>Des tutos de 3 heures pour un seul effet</li>
-            <li>Des clients qui veulent 10 formats « pour hier »</li>
-          </ul>
-        </div>
-        <div class="after">
-          <span class="label hl">AVEC LA MÉTHODE MOTIONCLAUDE</span>
-          <ul>
-            <li>Tu écris ce que tu veux, Claude génère les expressions et le code</li>
-            <li>Tu automatises les textes, les formats et les variantes</li>
-            <li>Tu exportes des vidéos MP4 depuis du code avec Remotion</li>
-            <li>Tu livres plus vite et tu factures plus cher</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
+  multi(step, qi, qn) {
+    const draw = () => {
+      app.innerHTML = `<div class="screen">
+        <div class="q-head"><span class="step-count">Question ${qi + 1} sur ${qn}</span><h2>${step.q}</h2>${step.sub ? `<p>${step.sub}</p>` : ""}</div>
+        ${optionsHTML(step)}</div>`;
+      app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => {
+        const v = b.dataset.v, opt = O[step.id].find((o) => o.v === v);
+        let cur = S.a[step.id] || [];
+        if (cur.includes(v)) cur = cur.filter((x) => x !== v);
+        else if (opt.exclusive) cur = [v];
+        else cur = cur.filter((x) => !O[step.id].find((o) => o.v === x).exclusive).concat(v);
+        S.a[step.id] = cur; save(); draw();
+      }));
+      const n = (S.a[step.id] || []).length;
+      setCta(n ? `Continuer (${n}) →` : "Choisis au moins une réponse", () => go(1), { disabled: !n });
+    };
+    draw();
+  },
 
-  <section class="block alt" id="programme">
-    <div class="wrap">
-      <div class="head">
-        <span class="tc">Programme · 8 modules · 10 h de vidéo</span>
-        <h2>De ta première animation à tes premiers clients</h2>
-        <p>Chaque module contient les vidéos, les fichiers projets à télécharger et les prompts utilisés à l'écran.</p>
-      </div>
-      <div class="mods">
-        <details class="mod" open><summary><span class="t">M1</span>Les bases du motion design<span class="d">00:45:00</span></summary><p>Timing, easing, anticipation, rythme. Les principes qui font qu'une animation paraît professionnelle.</p></details>
-        <details class="mod"><summary><span class="t">M2</span>Parler à Claude comme à un animateur<span class="d">01:00:00</span></summary><p>Rédiger un brief d'animation, donner des références, corriger un résultat en deux messages. Tu repars avec ton modèle de brief.</p></details>
-        <details class="mod"><summary><span class="t">M3</span>After Effects : expressions et scripts<span class="d">01:30:00</span></summary><p>Rebonds, inertie, wiggle contrôlé, liens entre calques. Puis des scripts ExtendScript qui montent une composition à ta place.</p></details>
-        <details class="mod"><summary><span class="t">M4</span>Des vidéos en code avec Remotion<span class="d">02:00:00</span></summary><p>Claude écrit, tu ajustes, tu exportes en MP4. Idéal pour produire des dizaines de vidéos à partir d'un tableau.</p></details>
-        <details class="mod"><summary><span class="t">M5</span>Animation web : CSS, SVG et GSAP<span class="d">01:15:00</span></summary><p>Logos animés, micro-interactions, landing pages qui bougent. Le code est prêt à coller dans un site.</p></details>
-        <details class="mod"><summary><span class="t">M6</span>Lottie et Rive pour les apps<span class="d">01:00:00</span></summary><p>Des animations légères pour mobile, que Claude t'aide à préparer, nettoyer et corriger.</p></details>
-        <details class="mod"><summary><span class="t">M7</span>Du storyboard au rendu final<span class="d">01:30:00</span></summary><p>Script, storyboard, déclinaisons 9:16, 1:1 et 16:9, sous-titres automatiques. Le workflow complet d'un projet client.</p></details>
-        <details class="mod"><summary><span class="t">M8</span>Vendre tes animations<span class="d">01:00:00</span></summary><p>Portfolio, offres, prix, messages de prospection et devis, rédigés avec Claude pour signer tes premiers clients.</p></details>
-      </div>
-    </div>
-  </section>
+  info(step) {
+    const a = S.a;
+    let html = "";
+    if (step.id === "info1") {
+      const items = (a.create || []).map((c) => LABEL("create", c).toLowerCase());
+      const txt = items.length > 1 ? items.slice(0, -1).join(", ") + " et " + items[items.length - 1] : items[0] || "tes animations";
+      html = `<span class="tc">Bonne nouvelle</span>
+        <h2>Tout ça, l'IA peut l'animer pour toi.</h2>
+        <div class="info-card">
+          <p>Pour <b>${esc(txt)}</b>, tu n'as plus besoin de placer chaque image clé à la main. Tu décris le résultat, l'IA génère l'animation, et tu ajustes.</p>
+          <div class="compare">
+            <div><span>À la main</span><b>3 à 6 h</b><small class="muted">pour un logo animé simple</small></div>
+            <div class="now"><span>Avec Motion IA</span><b>≈ 20 min</b><small class="muted">description, génération, retouches</small></div>
+          </div>
+          <small class="muted">Temps indicatifs pour une animation de logo de 3 secondes.</small>
+        </div>`;
+    } else {
+      const lvl = { zero: "même en partant de zéro", basics: "avec tes bases actuelles", inter: "avec ton expérience", pro: "avec ton niveau pro" }[a.level] || "";
+      const ai = { often: "Tu utilises déjà l'IA : tu vas apprendre à t'en servir pour l'animation, et ça change tout.", sometimes: "Tu connais un peu l'IA : on te donne les bonnes demandes pour obtenir des animations utilisables.", never: "Tu n'as jamais utilisé l'IA ? Parfait, on te montre tout pas à pas, jusqu'à ta première animation." }[a.ai] || "";
+      const tools = (a.tools || []).filter((t) => t !== "none");
+      html = `<span class="tc">Ton profil se dessine</span>
+        <h2>Tu peux créer des animations pro ${lvl}.</h2>
+        <div class="info-card"><p>${ai}</p>
+          <p class="muted">${tools.length ? "On va connecter l'IA aux outils que tu utilises déjà : " + esc(tools.map((t) => LABEL("tools", t)).join(", ")) + "." : "Pas de logiciel ? Aucun problème : ton parcours commence avec des outils gratuits."}</p></div>`;
+    }
+    app.innerHTML = `<div class="screen">${html}</div>`;
+    setCta("Continuer →", () => go(1));
+  },
 
-  <section class="block" id="projets">
-    <div class="wrap">
-      <div class="head">
-        <span class="tc">Ce que tu vas créer</span>
-        <h2>6 projets pour remplir ton portfolio</h2>
-      </div>
-      <div class="grid3">
-        <article class="proj"><div class="vis v1"><i></i></div><h3>Logo animé</h3><p>Un reveal de logo en SVG et GSAP, exportable en vidéo.</p></article>
-        <article class="proj"><div class="vis v2"><i></i><i></i><i></i></div><h3>Kinetic typography</h3><p>Un texte animé au rythme d'une musique, rendu avec Remotion.</p></article>
-        <article class="proj"><div class="vis v3"><i></i></div><h3>Vidéo explicative</h3><p>60 secondes, du script écrit avec Claude jusqu'à l'export.</p></article>
-        <article class="proj"><div class="vis v4"><i></i><i></i></div><h3>Pack réseaux sociaux</h3><p>10 templates Reels et TikTok déclinés automatiquement.</p></article>
-        <article class="proj"><div class="vis v5"><i></i></div><h3>Micro-interactions</h3><p>Boutons, loaders et transitions Lottie pour une application.</p></article>
-        <article class="proj"><div class="vis v6"><i></i><i></i><i></i><i></i></div><h3>Graphiques animés</h3><p>Des données qui s'animent à partir d'un simple tableur.</p></article>
-      </div>
-    </div>
-  </section>
+  lead() {
+    const a = S.a;
+    app.innerHTML = `<div class="screen">
+      <div class="q-head"><span class="step-count">Dernière étape</span><h2>Ton plan est presque prêt. Où doit-on te l'envoyer ?</h2>
+      <p>On l'affiche juste après, et on t'en envoie une copie par e-mail.</p></div>
+      <form id="lead-form" class="screen" novalidate>
+        <div class="field"><label for="f-name">Ton prénom</label><input id="f-name" name="name" autocomplete="given-name" value="${esc(a.name || "")}" placeholder="Ex. Léa" /></div>
+        <div class="field"><label for="f-email">Ton e-mail</label><input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" value="${esc(a.email || "")}" placeholder="toi@exemple.fr" /></div>
+        <span class="err" id="f-err" hidden></span>
+        <p class="consent">En continuant, tu acceptes de recevoir ton plan et nos conseils motion design par e-mail. Désinscription en un clic.</p>
+        <button type="submit" hidden></button>
+      </form></div>`;
+    const submit = () => {
+      const nameEl = document.getElementById("f-name"), emailEl = document.getElementById("f-email"), err = document.getElementById("f-err");
+      const name = nameEl.value.trim(), email = emailEl.value.trim();
+      if (!name) { err.textContent = "Indique ton prénom pour personnaliser ton plan."; err.hidden = false; nameEl.focus(); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = "Cette adresse e-mail n'est pas valide. Vérifie-la puis réessaie."; err.hidden = false; emailEl.focus(); return; }
+      S.a.name = name; S.a.email = email; save();
+      if (LEAD_WEBHOOK_URL) {
+        try { fetch(LEAD_WEBHOOK_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...S.a, recommended: plan().rec, date: new Date().toISOString() }) }).catch(() => {}); } catch (e) {}
+      }
+      go(1);
+    };
+    document.getElementById("lead-form").addEventListener("submit", (e) => { e.preventDefault(); submit(); });
+    setCta("Voir mon plan personnalisé →", submit);
+  },
 
-  <section class="block alt">
-    <div class="wrap">
-      <div class="head">
-        <span class="tc">Pour qui</span>
-        <h2>Tu n'as pas besoin d'être développeur</h2>
-      </div>
-      <div class="who">
-        <div><h3>Débutants</h3><p>Tu pars de zéro. Le module 1 pose toutes les bases avant de toucher à l'IA.</p></div>
-        <div><h3>Monteurs vidéo</h3><p>Tu ajoutes des animations à tes montages sans passer des soirées sur After Effects.</p></div>
-        <div><h3>Motion designers</h3><p>Tu gagnes des heures sur chaque projet et tu proposes des offres en volume.</p></div>
-        <div><h3>Créateurs et marques</h3><p>Tu produis tes propres contenus animés au lieu de les sous-traiter.</p></div>
-      </div>
-    </div>
-  </section>
+  loading() {
+    const items = ["Analyse de ton objectif", "Sélection de tes modules", "Choix de ton premier projet", "Calcul de ton planning", "Préparation de ton offre"];
+    const C = 2 * Math.PI * 62;
+    app.innerHTML = `<div class="screen loader">
+      <div class="ring"><svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+        <circle cx="70" cy="70" r="62" fill="none" stroke="var(--bg-2)" stroke-width="10"/>
+        <circle id="arc" cx="70" cy="70" r="62" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+      </svg><span id="pct">0%</span></div>
+      <h2>On crée ton plan, ${esc(S.a.name || "")}…</h2>
+      <ul class="load-list">${items.map((t) => `<li>${t}</li>`).join("")}</ul></div>`;
+    const arc = document.getElementById("arc"), pct = document.getElementById("pct"), lis = app.querySelectorAll(".load-list li");
+    const total = 4200, t0 = Date.now();
+    const frame = () => {
+      if (!document.body.contains(arc)) return;
+      const p = Math.min(1, (Date.now() - t0) / total);
+      arc.setAttribute("stroke-dashoffset", C * (1 - p));
+      pct.textContent = Math.round(p * 100) + "%";
+      lis.forEach((li, k) => li.classList.toggle("done", p >= (k + 1) / lis.length - 0.02));
+      timers.push(setTimeout(p < 1 ? frame : () => go(1), p < 1 ? 50 : 400));
+    };
+    frame();
+  },
 
-  <section class="block" id="tarifs">
-    <div class="wrap">
-      <div class="head">
-        <span class="tc">Tarifs</span>
-        <h2>Tout ce que tu reçois</h2>
-      </div>
-      <div class="stack" style="margin-bottom:56px">
-        <div class="stack-row"><span>8 modules vidéo (10 h)</span><span>197 €</span></div>
-        <div class="stack-row"><span>Bibliothèque de 150+ prompts classés par outil</span><span>67 €</span></div>
-        <div class="stack-row"><span>Fichiers projets After Effects et Remotion</span><span>47 €</span></div>
-        <div class="stack-row"><span>Templates réseaux sociaux prêts à décliner</span><span>37 €</span></div>
-        <div class="stack-row"><span>Communauté privée d'entraide</span><span>47 €</span></div>
-        <div class="stack-total"><span>Valeur totale <s>395 €</s></span><span>Aujourd'hui <strong>197 €</strong></span></div>
-      </div>
+  result() {
+    const a = S.a, P = plan();
+    const nProjects = a.income ? Math.ceil(a.income / 400) : 0;
+    const bits = { "v-type": 3, "v-phone": 2, "v-data": 4 }[P.first.vis] || 1;
+    app.innerHTML = `<div class="screen">
+      <div class="q-head"><span class="tc">Ton plan Motion IA</span>
+        <h1>${esc(a.name || "")}, ton plan pour ${GOAL_TITLE[a.goal] || "progresser en motion design"} est prêt.</h1></div>
 
-      <div class="head"><h2>Choisis ta formule</h2></div>
-      <div class="plans">
-        <div class="plan">
-          <h3>Essentiel</h3>
-          <div class="price"><span class="amt">97 €</span><small>paiement unique</small></div>
-          <ul>
-            <li>Les 8 modules vidéo</li>
-            <li>150+ prompts</li>
-            <li>Fichiers projets</li>
-            <li>Accès à vie</li>
-          </ul>
-          <button class="btn ghost block" data-buy="essentiel">Choisir Essentiel</button>
-        </div>
-        <div class="plan best">
-          <span class="ribbon">Le plus choisi</span>
-          <h3>Pro</h3>
-          <div class="price"><s>297 €</s><span class="amt">197 €</span><small>ou 3 × 65,67 € sans frais</small></div>
-          <ul>
-            <li>Tout Essentiel</li>
-            <li>Templates réseaux sociaux</li>
-            <li>Communauté privée</li>
-            <li>Module bonus : vendre ses animations</li>
-            <li>Certificat de fin de formation</li>
-          </ul>
-          <button class="btn block" data-buy="pro">Je prends la formule Pro</button>
-        </div>
-        <div class="plan">
-          <h3>Coaching</h3>
-          <div class="price"><span class="amt">497 €</span><small>ou 3 × 165,67 € sans frais</small></div>
-          <ul>
-            <li>Tout Pro</li>
-            <li>3 sessions de coaching individuel</li>
-            <li>Revue de ton portfolio</li>
-            <li>Support prioritaire</li>
-          </ul>
-          <button class="btn ghost block" data-buy="coaching">Choisir Coaching</button>
-        </div>
+      <div class="profile">
+        <div><span>Objectif</span><b>${LABEL("goal", a.goal)}</b></div>
+        <div><span>Niveau</span><b>${LABEL("level", a.level)}</b></div>
+        <div><span>Temps par jour</span><b>${LABEL("time", a.time)}</b></div>
+        <div><span>Logiciels</span><b>${(a.tools || []).map((t) => LABEL("tools", t)).join(", ") || "Aucun"}</b></div>
       </div>
 
-      <div class="paybar">
-        <div class="logos" aria-label="Moyens de paiement acceptés">
-          <span class="pm cb">CB</span><span class="pm visa">VISA</span><span class="pm mc" aria-label="Mastercard"><i></i><i></i></span>
-          <span class="pm ap"> Pay</span><span class="pm gp">G Pay</span><span class="pm pp"><b>Pay</b>Pal</span>
-        </div>
-        <p class="secure">🔒 Paiement 100 % sécurisé · Carte bancaire, Apple Pay, Google Pay, PayPal · 3× sans frais</p>
+      <div class="first">
+        <div class="vis ${P.first.vis}">${"<i></i>".repeat(bits)}</div>
+        <div><span class="tc">Ton premier projet</span><h2>${P.first.t}</h2><p class="muted">${P.first.d}</p>
+          <span class="date-pill">Prêt d'ici le ${P.date}</span></div>
       </div>
 
-      <div class="guarantee">
-        <div class="seal"><span><b>14</b>JOURS</span></div>
-        <div>
-          <h3>Satisfait ou remboursé, sans condition</h3>
-          <p>Suis la formation pendant 14 jours. Si elle ne te convient pas, envoie un e-mail et tu es remboursé intégralement. Aucune justification demandée.</p>
-        </div>
+      <div class="q-head"><h2>Ton parcours en ${P.mods.length} étapes</h2><p>Choisies d'après tes réponses, dans cet ordre.</p></div>
+      <ol class="path">${P.mods.map((m, k) => `<li><span class="n">${k + 1}</span><span><b>${m.t}</b><small>${m.s}</small></span></li>`).join("")}</ol>
+
+      ${P.fix ? `<div class="callout"><span>Ton frein : ${LABEL("blocker", a.blocker).toLowerCase()}</span><p>${P.fix}</p></div>` : ""}
+      ${nProjects ? `<div class="info-card"><span class="tc">Ton objectif de revenu</span><p><span class="big-num">${nProjects}</span> projets par mois</p><p class="muted">C'est ce qu'il faut pour atteindre ${eur(a.income)} par mois avec des projets facturés 400 € en moyenne (un logo animé ou une courte pub). Estimation indicative : tes tarifs dépendront de tes clients.</p></div>` : ""}
+    </div>`;
+    if (!S.plan) { S.plan = P.rec; save(); }
+    setCta("Voir mon offre personnalisée →", () => go(1));
+  },
+
+  checkout() {
+    const a = S.a, P = plan();
+    if (!S.plan) S.plan = P.rec;
+    const creates = (a.create || []).map((c) => LABEL("create", c).toLowerCase());
+    const INC = {
+      essentiel: ["Ton parcours de " + P.mods.length + " étapes en vidéo", "150+ demandes prêtes à l'emploi", "Les fichiers de tous les projets", "Accès à vie et mises à jour"],
+      pro: ["Tout Essentiel", "Templates : " + (creates.slice(0, 3).join(", ") || "réseaux sociaux"), "Communauté privée d'entraide", "Module « Trouver des clients »", "Certificat de fin de formation"],
+      coaching: ["Tout Pro", "3 sessions de coaching individuel", "Revue de ton portfolio", "Support prioritaire"],
+    };
+    const on = offerOn();
+    const plansHTML = Object.keys(PLANS).map((k) => {
+      const p = PLANS[k], price = priceOf(k);
+      return `<button class="plan" data-plan="${k}" aria-pressed="${S.plan === k}">
+        ${k === P.rec ? `<span class="badge">Recommandé pour toi</span>` : ""}
+        <span class="plan-top"><span class="tick" aria-hidden="true"></span><h3>${p.name}</h3>
+          <span class="pr">${on ? `<s>${eur(p.old)}</s>` : ""}<b>${eur(price)}</b><small>ou 3 × ${eur(third(price))}</small></span></span>
+        <ul>${INC[k].map((x) => `<li>${esc(x)}</li>`).join("")}</ul></button>`;
+    }).join("");
+    const methods = [
+      { v: "card", ic: "💳", l: "Carte bancaire", s: "Apple Pay et Google Pay acceptés", logos: `<span class="pm cb">CB</span><span class="pm visa">VISA</span><span class="pm mc"><i></i><i></i></span>` },
+      { v: "split", ic: "🗓️", l: "3× sans frais", s: "Par carte, sur 3 mois", logos: `<span class="pm cb">3×</span>` },
+      { v: "paypal", ic: "🅿️", l: "PayPal", s: "Avec ton compte ou en 4× PayPal", logos: `<span class="pm pp"><b>Pay</b>Pal</span>` },
+    ];
+
+    app.innerHTML = `<div class="screen">
+      ${on ? `<div class="deadline"><span>Offre de lancement</span><span class="mono" id="cd">—</span></div>` : ""}
+      <div class="q-head"><h2>${esc(a.name ? a.name + ", choisis" : "Choisis")} ta formule</h2>
+        <p>Ton parcours personnalisé est inclus dans les trois formules.</p></div>
+      <div class="plans">${plansHTML}</div>
+      <div class="methods" role="group" aria-label="Moyen de paiement"><span class="label">Moyen de paiement</span>
+        ${methods.map((m) => `<button class="opt radio" data-pay="${m.v}" aria-pressed="${S.pay === m.v}">
+          <span class="ic" aria-hidden="true">${m.ic}</span><span><b>${m.l}</b><small>${m.s}</small></span><span class="logos">${m.logos}</span></button>`).join("")}
       </div>
-    </div>
-  </section>
+      <p class="notice" id="notice" hidden>Ce moyen de paiement n'est pas encore activé. Le propriétaire du site doit ajouter son lien de paiement dans la configuration.</p>
+      <div class="guarantee"><div class="seal"><span><b>14</b>JOURS</span></div>
+        <div><h3>Satisfait ou remboursé</h3><p>Si la formation ne te convient pas, tu es remboursé intégralement sous 14 jours, sans justification.</p></div></div>
+      <p class="muted" style="font-size:.85rem;text-align:center">🔒 Paiement sécurisé par notre prestataire. Tes données bancaires ne passent jamais par ce site. Accès envoyé par e-mail juste après le paiement.</p>
+      <button class="restart" id="restart">Refaire le quiz</button>
+    </div>`;
 
-  <section class="block alt" id="faq">
-    <div class="wrap">
-      <div class="head"><span class="tc">FAQ</span><h2>Questions fréquentes</h2></div>
-      <details class="faq"><summary>Faut-il savoir coder ?</summary><p>Non. Claude écrit le code et les scripts. Tu apprends à le guider, à vérifier le résultat et à l'ajuster.</p></details>
-      <details class="faq"><summary>Faut-il un abonnement Claude payant ?</summary><p>La version gratuite suffit pour suivre la formation. Un abonnement payant est utile si tu produis beaucoup, mais il n'est pas obligatoire.</p></details>
-      <details class="faq"><summary>Ai-je besoin d'After Effects ?</summary><p>Seulement pour le module 3. Remotion, GSAP, CSS, SVG et Lottie sont gratuits.</p></details>
-      <details class="faq"><summary>Comment fonctionne le paiement en 3 fois ?</summary><p>Choisis « 3× sans frais » au moment du paiement. Le premier tiers est prélevé aujourd'hui, les deux autres à 30 et 60 jours. Tu as accès à toute la formation dès le premier paiement.</p></details>
-      <details class="faq"><summary>Quand ai-je accès à la formation ?</summary><p>Immédiatement après le paiement. Tu reçois tes accès par e-mail dans la minute.</p></details>
-      <details class="faq"><summary>Et si la formation ne me plaît pas ?</summary><p>Tu as 14 jours pour demander un remboursement intégral, sans justification.</p></details>
-    </div>
-  </section>
-
-  <section class="final">
-    <div class="wrap">
-      <h2>Ta prochaine animation peut prendre 10 minutes.</h2>
-      <p class="muted">Accès immédiat · Satisfait ou remboursé 14 jours</p>
-      <button class="btn" data-buy="pro">Rejoindre MotionClaude · 197 €</button>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <div class="wrap">
-    <span>© <span id="year">2026</span> MotionClaude</span>
-    <span>Formation indépendante, non affiliée à Anthropic. Claude est une marque d'Anthropic.</span>
-    <span>Mentions légales · CGV · Contact</span>
-  </div>
-</footer>
-
-<div class="sticky-cta">
-  <span class="p"><s>297 €</s>197 €</span>
-  <button class="btn" data-buy="pro">Acheter la formation</button>
-</div>
-
-<div class="overlay" id="checkout" hidden>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="co-title">
-    <div class="sheet-head">
-      <div>
-        <span class="tc">Paiement sécurisé</span>
-        <h3 id="co-title" style="margin-top:8px">Finaliser ma commande</h3>
-      </div>
-      <button class="x" id="co-close" aria-label="Fermer">✕</button>
-    </div>
-
-    <div class="summary"><span id="co-plan">Formule Pro</span><span id="co-price">197 €</span></div>
-
-    <div class="methods" role="radiogroup" aria-label="Moyen de paiement">
-      <span class="field-label">Moyen de paiement</span>
-      <label class="method">
-        <input type="radio" name="pay" id="pay-card" value="card" checked />
-        <span><b>Carte bancaire</b><small>Paiement unique · Apple Pay et Google Pay acceptés</small></span>
-        <span class="logos"><span class="pm cb">CB</span><span class="pm visa">VISA</span><span class="pm mc"><i></i><i></i></span></span>
-      </label>
-      <label class="method">
-        <input type="radio" name="pay" id="pay-3x" value="split" />
-        <span><b>3× sans frais</b><small id="co-split">3 × 65,67 € · par carte</small></span>
-        <span class="logos"><span class="pm cb">3×</span></span>
-      </label>
-      <label class="method">
-        <input type="radio" name="pay" id="pay-paypal" value="paypal" />
-        <span><b>PayPal</b><small>Avec ton compte PayPal ou en 4× PayPal</small></span>
-        <span class="logos"><span class="pm pp"><b>P</b>P</span></span>
-      </label>
-    </div>
-
-    <p class="notice" id="co-notice" hidden>Ce moyen de paiement n'est pas encore activé. Le propriétaire du site doit ajouter son lien de paiement dans la configuration.</p>
-
-    <button class="btn block" id="co-pay">Payer 197 €</button>
-    <p class="fine">🔒 Tu es redirigé vers notre prestataire de paiement sécurisé. Tes données bancaires ne transitent jamais par ce site. Accès envoyé par e-mail immédiatement après le paiement.</p>
-  </div>
-</div>
-
-<script>
-/* ========= CONFIGURATION DES PAIEMENTS =========
-   Colle ici tes liens de paiement (Stripe Payment Links, PayPal, Systeme.io, Gumroad...).
-   card   : lien Stripe en paiement unique (CB, Apple Pay, Google Pay)
-   split  : lien Stripe en 3 fois (abonnement 3 mensualités)
-   paypal : lien PayPal (bouton "Acheter" ou PayPal.me)
-*/
-const PAYMENT_LINKS = {
-  essentiel: { card: "", split: "", paypal: "" },
-  pro:       { card: "", split: "", paypal: "" },
-  coaching:  { card: "", split: "", paypal: "" },
+    const update = () => {
+      app.querySelectorAll(".plan").forEach((b) => b.setAttribute("aria-pressed", b.dataset.plan === S.plan));
+      app.querySelectorAll("[data-pay]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.pay === S.pay));
+      const price = priceOf(S.plan);
+      const label = S.pay === "split" ? `Payer 3 × ${eur(third(price))}` : S.pay === "paypal" ? `Payer ${eur(price)} avec PayPal` : `Payer ${eur(price)}`;
+      setCta(label + " →", pay, { note: `Formule ${PLANS[S.plan].name} · accès immédiat` });
+      document.getElementById("notice").hidden = true;
+      save();
+    };
+    app.querySelectorAll(".plan").forEach((b) => b.addEventListener("click", () => { S.plan = b.dataset.plan; update(); }));
+    app.querySelectorAll("[data-pay]").forEach((b) => b.addEventListener("click", () => { S.pay = b.dataset.pay; update(); }));
+    document.getElementById("restart").addEventListener("click", () => { S = fresh(); save(); render(); window.scrollTo(0, 0); });
+    update();
+    if (on) countdown();
+  },
 };
-const LAUNCH_OFFER_END = "2026-10-31T23:59:59";
 
-const PLANS = {
-  essentiel: { name: "Formule Essentiel", price: 97 },
-  pro:       { name: "Formule Pro", price: 197 },
-  coaching:  { name: "Formule Coaching", price: 497 },
-};
-const eur = (n) => n.toLocaleString("fr-FR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + " €";
-
-const overlay = document.getElementById("checkout");
-const payBtn = document.getElementById("co-pay");
-const notice = document.getElementById("co-notice");
-let currentPlan = "pro";
-
-function method() { return document.querySelector('input[name="pay"]:checked').value; }
-function refresh() {
-  const p = PLANS[currentPlan];
-  const third = Math.round(p.price / 3 * 100) / 100;
-  document.getElementById("co-plan").textContent = p.name;
-  document.getElementById("co-price").textContent = eur(p.price);
-  document.getElementById("co-split").textContent = "3 × " + eur(third) + " · par carte";
-  const m = method();
-  payBtn.textContent = m === "split" ? "Payer 3 × " + eur(third) : m === "paypal" ? "Continuer avec PayPal" : "Payer " + eur(p.price);
-  notice.hidden = true;
-}
-function openCheckout(plan) {
-  currentPlan = plan in PLANS ? plan : "pro";
-  refresh();
-  overlay.hidden = false;
-  document.body.style.overflow = "hidden";
-  document.getElementById("co-close").focus();
-}
-function closeCheckout() { overlay.hidden = true; document.body.style.overflow = ""; }
-
-document.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => openCheckout(b.dataset.buy)));
-document.querySelectorAll('input[name="pay"]').forEach((r) => r.addEventListener("change", refresh));
-document.getElementById("co-close").addEventListener("click", closeCheckout);
-overlay.addEventListener("click", (e) => { if (e.target === overlay) closeCheckout(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeCheckout(); });
-payBtn.addEventListener("click", () => {
-  const url = PAYMENT_LINKS[currentPlan][method()];
-  if (!url) { notice.hidden = false; return; }
+function pay() {
+  let url = (PAYMENT_LINKS[S.plan] || {})[S.pay];
+  if (!url) { const n = document.getElementById("notice"); n.hidden = false; n.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+  if (/stripe\.com/.test(url) && S.a.email) url += (url.includes("?") ? "&" : "?") + "prefilled_email=" + encodeURIComponent(S.a.email);
   window.location.href = url;
-});
+}
 
-/* Prompt typing in the hero */
-const prompts = [
-  "Fais rebondir le logo avec un easing élastique",
-  "Crée une intro de 5 s en kinetic typography",
-  "Écris une expression AE pour un wiggle qui s'arrête",
-  "Décline cette animation en 9:16 et 1:1",
-];
-const typed = document.getElementById("typed");
-if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+function countdown() {
+  const el = document.getElementById("cd"), end = new Date(LAUNCH_OFFER_END).getTime();
+  const tick = () => {
+    if (!document.body.contains(el)) return;
+    const d = end - Date.now();
+    if (d <= 0) { render(); return; }
+    const j = Math.floor(d / 864e5), h = Math.floor(d / 36e5) % 24, m = Math.floor(d / 6e4) % 60, s = Math.floor(d / 1e3) % 60;
+    el.textContent = `${j}j ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    timers.push(setTimeout(tick, 1000));
+  };
+  tick();
+}
+
+function typeLoop() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const prompts = ["Fais rebondir mon logo avec un effet élastique", "Crée une intro de 5 s avec mon texte animé", "Décline cette animation en format Reel", "Anime ce graphique barre par barre"];
   let pi = 0, ci = prompts[0].length, del = false;
-  setTimeout(function loop() {
-    const t = prompts[pi];
-    typed.textContent = t.slice(0, ci);
-    if (!del && ci < t.length) { ci++; setTimeout(loop, 45); }
-    else if (!del) { del = true; setTimeout(loop, 1800); }
-    else if (ci > 0) { ci--; setTimeout(loop, 18); }
-    else { del = false; pi = (pi + 1) % prompts.length; setTimeout(loop, 250); }
-  }, 1800);
+  const loop = () => {
+    const el = document.getElementById("typed"); if (!el) return;
+    const t = prompts[pi]; el.textContent = t.slice(0, ci);
+    if (!del && ci < t.length) { ci++; timers.push(setTimeout(loop, 45)); }
+    else if (!del) { del = true; timers.push(setTimeout(loop, 1800)); }
+    else if (ci > 0) { ci--; timers.push(setTimeout(loop, 18)); }
+    else { del = false; pi = (pi + 1) % prompts.length; timers.push(setTimeout(loop, 250)); }
+  };
+  timers.push(setTimeout(loop, 1800));
 }
 
-/* Launch-offer countdown */
-const cdTop = document.getElementById("cd-top");
-const end = new Date(LAUNCH_OFFER_END).getTime();
-function tick() {
-  const d = end - Date.now();
-  if (!(d > 0)) { cdTop.closest(".promo").hidden = true; return; }
-  const j = Math.floor(d / 864e5), h = Math.floor(d / 36e5) % 24, m = Math.floor(d / 6e4) % 60, s = Math.floor(d / 1e3) % 60;
-  cdTop.textContent = `${j}j ${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`;
-}
-tick(); setInterval(tick, 1000);
 document.getElementById("year").textContent = new Date().getFullYear();
+render();
 </script>
 </body>
 </html>

@@ -1,6 +1,8 @@
-# MotionClaude — Site de vente de la formation
+# Motion IA — Funnel de vente (quiz)
 
-Landing page statique en un seul fichier (`index.html`, sans dépendance) pour vendre une formation « Motion design avec Claude ».
+Funnel de vente en un seul fichier (`index.html`, sans dépendance) : un quiz pose des questions sur le projet de l'acheteur, affiche un plan personnalisé, puis l'envoie vers le paiement.
+
+**Parcours :** accueil → objectif → créations voulues → écran « bonne nouvelle » → niveau → logiciels → IA → écran profil → temps par jour → frein → revenu visé (freelances uniquement) → prénom + e-mail → chargement → plan personnalisé → choix de la formule et paiement.
 
 ## Voir le site en local
 
@@ -10,16 +12,16 @@ python3 -m http.server 8080
 # puis ouvrir http://localhost:8080
 ```
 
-## À personnaliser avant la mise en ligne
+## À configurer (en haut du `<script>` dans `index.html`)
 
-1. **Liens de paiement** — en bas de `index.html`, renseigne `PAYMENT_LINKS` pour chaque formule :
-   - `card` : Stripe Payment Link en paiement unique (CB, Apple Pay, Google Pay)
-   - `split` : Stripe Payment Link en 3 mensualités
-   - `paypal` : lien PayPal
-2. **Offre de lancement** — `LAUNCH_OFFER_END` dans `index.html` (date passée = bandeau masqué).
-3. **Prix & formules** — section `#tarifs` dans `index.html`.
-4. **Témoignages** — ajoute de vrais avis d'élèves dès que tu en as.
-5. **Mentions légales / CGV / Contact** — liens du footer (obligatoires pour vendre en France).
+1. **`PAYMENT_LINKS`** : un lien par formule et par moyen de paiement.
+   - `card` : Stripe Payment Link en paiement unique (CB, Apple Pay, Google Pay). L'e-mail du quiz est prérempli automatiquement.
+   - `split` : Stripe Payment Link en 3 mensualités.
+   - `paypal` : lien PayPal.
+2. **`LEAD_WEBHOOK_URL`** : URL qui reçoit les réponses et l'e-mail (Systeme.io, Brevo, Make, Zapier…).
+3. **`LAUNCH_OFFER_END`** : fin de l'offre de lancement. Après cette date, les prix barrés et le compte à rebours disparaissent.
+4. **`PLANS`** : prix des formules.
+5. **Mentions légales / CGV / Contact** : obligatoires pour vendre en France.
 
 ## Déploiement
 
